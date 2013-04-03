@@ -18,7 +18,7 @@
 
 	function doRun() {
 		if($(this).attr('id') == 'start')
-			socket.emit('run_request',{ duration: 1, extend: 0, rate: 1000 });
+			socket.emit('run_request',{ duration: 1, extend: 0, rate: 3 });
 		else
 			socket.emit('run_request',{ duraction: 0 });
 	}
