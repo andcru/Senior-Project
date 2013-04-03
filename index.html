@@ -8,8 +8,8 @@
   	addText(data);
   });
   socket.on('running', function (data) {
-  	addText("Running: "+data);
-  	showStatus(data);
+  	addText("Running: "+data.number+", End: "+data.end);
+  	showStatus(data.number);
   });
 
 	$(document).ready(function() {

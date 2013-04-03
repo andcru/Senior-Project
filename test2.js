@@ -21,14 +21,15 @@ var conn = 0
   , buff = []
   , ddel = 1000
   , del  = 0
-  , st   = 20;
+  , st   = 20
+  , et   = 0;
   //sr   = srr > 0 ? srr : srd
 
 sampler();
 // Set Client Listeners
 io.sockets.on('connection', function (socket) {
   conn++;
-  io.sockets.emit('running', run);
+  io.sockets.emit('running', { number: run, end: et });
   console.log("Total connections: "+conn);
   socket.on('run_request', function (data) {
     if(data.duration > 0)
@@ -73,21 +74,23 @@ function setRun (data) {
       run = data.extend ? recent_run : recent_run + 1;
       console.log("Starting run "+run);
       del  = 1000/data.rate;
+      et = Math.floor((new Date()).getTime()/1000 + data.duration*60);
       rend = setTimeout(function() {
         run = 0;
-        io.sockets.emit('running', '0');
+        et = 0;
+        io.sockets.emit('running', { number: 0 });
       }, Math.floor(data.duration*60*1000));
-      io.sockets.emit('running', run);
+      io.sockets.emit('running', { number: run, end: et });
     });
   }
   else
-    io.sockets.emit('running', run);
+    io.sockets.emit('running', { number: run, end: et });
 }
 
 function killRun() {
   run = 0;
   clearTimeout(rend);
-  io.sockets.emit('running', '0');
+  io.sockets.emit('running', { number: 0 });
 }
 
 function db_request(data) {
