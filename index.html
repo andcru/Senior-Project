@@ -7,21 +7,28 @@
   socket.on('reading', function (data) {
   	addText(data);
   });
+  socket.on('running', function (data) {
+  	addText("Running: "+data);
+  });
 
 	$(document).ready(function() {
-		$("#getTime").click(getMe);
+		$(".do_run").click(doRun);
 	});
 
-	function getMe() {
-		socket.emit('run_request',{ duration: 1, extend: 0, rate: 1000 });
+	function doRun() {
+		if($(this).attr('id') == 'start')
+			socket.emit('run_request',{ duration: 1, extend: 0, rate: 1000 });
+		else
+			socket.emit('run_request',{ duraction: 0 });
 	}
 
 	function addText(data) {
-		$("#resptext").append(data+"<br/>");
+		$("#resptext").html(data+"<br/>"+$("#resptext").html());
 		console.log(data);
 	}
 </script>
 
-<button id="getTime">Click Me!</button>
+<button class="do_run" id="start">Start</button>
+<button class="do_run" id="stop">Stop</button>
 
 <div id="resptext"></div>

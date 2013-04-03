@@ -17,22 +17,24 @@ app.listen(8100);
 // Variable List
 var conn = 0
   , run  = 0
-  , runn = 0
+  , rend = null
   , buff = []
   , ddel = 1000
   , del  = 0
-  , st   = 20
-  , i    = 0; 
+  , st   = 20;
   //sr   = srr > 0 ? srr : srd
 
 sampler();
 // Set Client Listeners
 io.sockets.on('connection', function (socket) {
   conn++;
-  io.sockets.emit('running', runn);
+  io.sockets.emit('running', run);
   console.log("Total connections: "+conn);
   socket.on('run_request', function (data) {
-    setRun(data);
+    if(data.duration > 0)
+      setRun(data);
+    else
+      killRun();
   });
   socket.on('db_request', function (data) {
     socket.emit('db_return', db_request(data));
@@ -69,22 +71,28 @@ function handler (req, res) {
 function setRun (data) {
   // data contains (float) rate, (float) duration, (bool) extend
   if(!run) {
-    var recent_run;
+    var recent_run = 0;
     db.query("SELECT MAX(run) AS mrun from readings", function (err, rows, fields) {
       if(err) throw err;
       recent_run = rows[0].mrun;
+      run = data.extend ? recent_run : recent_run + 1;
+      console.log("Starting run "+run);
+      del  = 1000/data.rate;
+      rend = setTimeout(function() {
+        run = 0;
+        io.sockets.emit('running', '0');
+      }, Math.floor(data.duration*60*1000));
+      io.sockets.emit('running', run);
     });
-    runn = data.extend ? recent_run : recent_run + 1;
-    del  = 1000/data.rate;
-    rend = setTimeout(function() {
-      run = 0;
-      io.sockets.emit('running', '0');
-    }, Math.floor(data.duration*60*1000));
-    run = 1;
-    io.sockets.emit('running', runn);
   }
   else
-    io.sockets.emit('running', runn);
+    io.sockets.emit('running', run);
+}
+
+function killRun() {
+  run = 0;
+  clearTimeout(rend);
+  io.sockets.emit('running', '0');
 }
 
 function db_request(data) {
@@ -123,14 +131,12 @@ function sampler() {
     console.log(buff);
     io.sockets.emit('reading', buff);
     if( run ) {
-      var query = "INSERT INTO readings (r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12,r13,r14,r15,r16,timestamp) VALUES ("+buff+")";
+      var query = "INSERT INTO readings (run,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12,r13,r14,r15,r16,timestamp) VALUES ("+run+","+buff+")";
       db.query(query);
       delay = del;
-      console.log(i);
     }
   }
   delay = delay ? delay : ddel;
-  i++;
   console.log('Sampled');
   setTimeout(sampler,delay-st);
 }
