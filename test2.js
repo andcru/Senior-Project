@@ -42,11 +42,6 @@ io.sockets.on('connection', function (socket) {
   socket.on('db_update', function (data) {
     socket.emit('db_update', db_update(data));
   })
-  socket.on('test_event', function (data) {
-    console.log(data);
-    socket.broadcast.emit('resp','Someone else pushed the button.');
-    socket.emit('resp','I pushed the button.');
-  });
   socket.on('disconnect', function () {
     conn--;
     console.log("Total connections: "+conn);

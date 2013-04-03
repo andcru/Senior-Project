@@ -9,6 +9,7 @@
   });
   socket.on('running', function (data) {
   	addText("Running: "+data);
+  	showStatus(data);
   });
 
 	$(document).ready(function() {
@@ -26,7 +27,21 @@
 		$("#resptext").html(data+"<br/>"+$("#resptext").html());
 		console.log(data);
 	}
+
+	function showStatus(run) {
+		if(run > 0) {
+			$("#run_0").hide();
+			$("#run_1").show();
+		}
+		else {
+			$("#run_0").show();
+			$("#run_1").hide();
+		}
+	}
 </script>
+
+<div id="run_0">Stopped</div>
+<div id="run_1" style="display:none">Running</div>
 
 <button class="do_run" id="start">Start</button>
 <button class="do_run" id="stop">Stop</button>
