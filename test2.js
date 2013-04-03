@@ -106,12 +106,12 @@ function db_insert(data) {
   if (data.hasOwnProperty('pairs'))
     db.query("INSERT into ? SET ?", [data.table, data.pairs], function (err, rows, fields) {
       if(err) throw err;
-      else return "1";
+      else return rows.length;
     });
   else 
     db.query("INSERT into ? (?) VALUES (?)", [data.table, data.keys, data.values], function (err, rows, fields) {
       if(err) throw err;
-      else return "1";
+      else return rows.length;
     });
 }
 
