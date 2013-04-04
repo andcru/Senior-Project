@@ -1,3 +1,20 @@
+var inputs, outputs, conversions, displays, controls;
+
+
+socket.emit('db_request', { 'table': 'inputs' });
+socket.emit('db_request', { 'table': 'outputs' });
+socket.emit('db_request', { 'table': 'conversions' });
+socket.emit('db_request', { 'table': 'displays' });
+socket.emit('db_request', { 'table': 'controls' });
+
+socket.on('db_return', function (data) {
+    var buff = {};
+    $.each(data.row, function(k,v) {
+        buff[v.id] = v;
+    })
+    eval(data.table+"=buff;");
+})
+
     var recent_time = 0;
     var data_converted = [];
     var data_len_max = 100;
@@ -10,7 +27,6 @@
     var nulldata = [[null],[null],[null],[null],[null],[null],[null],[null]];
     var check_run = null;
     var fetch_data = null;
-
 
     function plot_options(title,xlabel,ylabel,ymin,ymax){
         this.title = {
