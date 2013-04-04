@@ -18,12 +18,14 @@ app.listen(8100);
 var conn = 0
   , run  = 0
   , rend = null
-  , ctls = []
   , buff = []
   , ddel = 1000
   , del  = 0
   , st   = 20
-  , et   = 0;
+  , et   = 0
+  , rinfo= new Object();
+
+var run_tables = new Array("controls","conversions","displays","inputs","outputs");
 
 sampler();
 // Set Client Listeners
@@ -81,39 +83,6 @@ function handler (req, res) {
   });
 }
 
-function setRun (data) {
-  // data contains (float) rate, (float) duration, (bool) extend
-  if(!run) {
-    var recent_run = 0;
-    db.query("SELECT MAX(run) AS mrun FROM readings", function (err, rows, fields) {
-      if(err) throw err;
-      recent_run = rows[0].mrun;
-      run = data.extend ? recent_run : recent_run + 1;
-      db.query("SELECT * FROM controls WHERE run='"+run+"'", function (err, rows, fields) {
-        if(err) throw err;
-        ctls = rows;
-        console.log("Starting run "+run);
-        del  = 1000/data.rate;
-        et = Math.floor((new Date()).getTime()/1000 + data.duration*60);
-        rend = setTimeout(function() {
-          run = 0;
-          et = 0;
-          io.sockets.emit('running', { number: 0 });
-        }, Math.floor(data.duration*60*1000));
-        io.sockets.emit('running', { number: run, end: et });
-      });
-    });
-  }
-  else
-    io.sockets.emit('running', { number: run, end: et });
-}
-
-function killRun() {
-  run = 0;
-  clearTimeout(rend);
-  io.sockets.emit('running', { number: 0 });
-}
-
 function db_request(data) {
   db.query('SELECT * FROM ' + sql.escapeId(data.table), function (err, rows, fields) {
     if(err) throw err;
@@ -142,6 +111,56 @@ function db_insert(data) {
     });
 }
 
+// <--------------------- Andy's Section ----------------------->
+
+// This is called when you want to start a new run. It chooses the run # for this run
+function setRun (data) {
+  // data contains (float) rate, (float) duration, (bool) extend
+  if(!run) {
+    var recent_run = 0;
+    db.query("SELECT MAX(run) AS mrun FROM readings", function (err, rows, fields) {
+      if(err) throw err;
+      recent_run = rows[0].mrun;
+      run = data.extend ? recent_run : recent_run + 1;
+      db_pullTable(0);
+    });
+  }
+  else
+    io.sockets.emit('running', { number: run, end: et });
+}
+
+// Retrieves run info from the various tables as defined in "run_tables"
+function db_pullTable(count) {
+  db.query('SELECT * FROM ' + sql.escapeId(run_tables[count]), function (err, rows, fields) {
+    if(err) throw err;
+    rinfo.run_tables[count] = rows;
+    if(count < run_tables.length-1)
+      db_pullTable(count+1);
+    else
+      setupRun();
+  });
+}
+
+// Inserts the config info into the "runs" table (TBD) and initializes the run
+function setupRun() {
+  console.log("Starting run "+run);
+  console.log()
+  del  = 1000/data.rate;
+  et = Math.floor((new Date()).getTime()/1000 + data.duration*60);
+  rend = setTimeout(function() {
+    run = 0;
+    et = 0;
+    io.sockets.emit('running', { number: 0 });
+  }, Math.floor(data.duration*60*1000));
+  io.sockets.emit('running', { number: run, end: et });
+}
+
+function killRun() {
+  run = 0;
+  clearTimeout(rend);
+  io.sockets.emit('running', { number: 0 });
+}
+
 // Sampler
 function sampler() {
   var delay;
@@ -165,13 +184,5 @@ function sampler() {
 function control(reading) {
   db.query("SELECT MAX(run) AS mrun from readings", function (err, rows, fields) {
       if(err) throw err;
-
-  });
-}
-
-function getControls() {
-  db.query("SELECT MAX(run) AS mrun from readings", function (err, rows, fields) {
-      if(err) throw err;
-
   });
 }
