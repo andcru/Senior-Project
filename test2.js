@@ -23,6 +23,7 @@ var conn = 0
   , del  = 0
   , st   = 20
   , et   = 0
+  , tblc = 0 // Counts tables pulled from for a run start
   , rinfo= new Object();
 
 var run_tables = new Array("controls","conversions","displays","inputs","outputs");
@@ -115,14 +116,15 @@ function db_insert(data) {
 
 // This is called when you want to start a new run. It chooses the run # for this run
 function setRun (data) {
-  // data contains (float) rate, (float) duration, (bool) extend
+  // data contains (float) rate, (float) duration
   if(!run) {
     var recent_run = 0;
     db.query("SELECT MAX(run) AS mrun FROM readings", function (err, rows, fields) {
       if(err) throw err;
       recent_run = rows[0].mrun;
       run = data.extend ? recent_run : recent_run + 1;
-      db_pullTable(0);
+      for (var i = 0 ; i < run_tables.length ; i++)
+        db_pullTable(i);
     });
   }
   else
@@ -134,17 +136,16 @@ function db_pullTable(count) {
   db.query('SELECT * FROM ' + sql.escapeId(run_tables[count]), function (err, rows, fields) {
     if(err) throw err;
     rinfo.run_tables[count] = rows;
-    if(count < run_tables.length-1)
-      db_pullTable(count+1);
-    else
+    tblc++;
+    if(tblc >= run_tables.length)
       setupRun();
   });
 }
 
 // Inserts the config info into the "runs" table (TBD) and initializes the run
 function setupRun() {
+  tblc = 0;
   console.log("Starting run "+run);
-  console.log()
   del  = 1000/data.rate;
   et = Math.floor((new Date()).getTime()/1000 + data.duration*60);
   rend = setTimeout(function() {
@@ -182,7 +183,5 @@ function sampler() {
 
 // Control function
 function control(reading) {
-  db.query("SELECT MAX(run) AS mrun from readings", function (err, rows, fields) {
-      if(err) throw err;
-  });
+
 }
