@@ -24,7 +24,6 @@ var conn = 0
   , del  = 0
   , st   = 20
   , et   = 0;
-  //sr   = srr > 0 ? srr : srd
 
 sampler();
 // Set Client Listeners
@@ -60,8 +59,24 @@ function handler (req, res) {
       res.writeHead(500);
       return res.end('Error loading '+file);
     }
-    console.log(file);
-    res.writeHead(200);
+    var ext = file.split('.');
+    ext = ext[ext.length-1];
+    console.log("file_ext: "+ext);
+    switch(ext){
+      case 'js':
+        var mtype = 'application/javascript';
+        break;
+      case 'css':
+        var mtype = 'text/css';
+        break;
+      case 'html':
+        var mtype = 'text/html';
+        break;
+      default:
+        var mtype = 'text/plain';
+    }
+    console.log("file served: "+file);
+    res.writeHead(200, { 'Content-Type': mtype });
     res.end(data);
   });
 }
@@ -100,8 +115,7 @@ function killRun() {
 }
 
 function db_request(data) {
-  var query = "SELECT * FROM "+data.table;
-  db.query(query, function (err, rows, fields) {
+  db.query('SELECT * FROM ' + sql.escapeId(data.table), function (err, rows, fields) {
     if(err) throw err;
     var ret={}; ret.rows = rows; ret.table = data.table;
     io.sockets.emit('db_return', ret);
@@ -109,7 +123,7 @@ function db_request(data) {
 }
 
 function db_update(data) {
-  db.query("UPDATE ? SET ? WHERE ?", [data.table, data.pairs, data.match], function (err, rows, fields) {
+  db.query('UPDATE ' + sql.escapeId(data.table) + ' SET ' + sql.escape(data.pairs) + ' WHERE ' + sql.escape(data.match), function (err, rows, fields) {
     if(err) throw err;
     else return "1";
   });
@@ -117,12 +131,12 @@ function db_update(data) {
 
 function db_insert(data) {
   if (data.hasOwnProperty('pairs'))
-    db.query("INSERT into ? SET ?", [data.table, data.pairs], function (err, rows, fields) {
+    db.query('INSERT INTO ' + sql.escapeId(data.table) + ' SET ' + sql.escape(data.pairs), function (err, rows, fields) {
       if(err) throw err;
       else return rows.length;
     });
   else 
-    db.query("INSERT into ? (?) VALUES (?)", [data.table, data.keys, data.values], function (err, rows, fields) {
+    db.query('INSERT INTO ' + sql.escapeId(data.table) + ' (' + sql.escapeId(data.keys) + ') VALUES (' + sql.escape(data.values) + ')', function (err, rows, fields) {
       if(err) throw err;
       else return rows.length;
     });
