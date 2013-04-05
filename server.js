@@ -1,3 +1,5 @@
+// <-------------------------------------- Initialization Blob -------------------------------------->
+
 // Setup Server
 var app = require('http').createServer(handler)
   , url = require('url')
@@ -18,23 +20,30 @@ exec("gpio unexportall");
 
 app.listen(8100);
 
+
+
 // Variable List
-var conn = 0
-  , run  = 0
-  , rend = null
-  , buff = []
-  , ddel = 1000
-  , del  = 0
-  , sd   = 20
-  , k    = 0
-  , et   = 0
-  , tblc = 0 // Counts tables pulled from db for a run start
-  , state= 0
-  , rinfo= {};
+var conn   = 0
+  , run    = 0
+  , abv    = 0 // Shows whether previous reading was above or below the setpoint
+  , rend   = null
+  , buff   = []
+  , ddel   = 1000
+  , del    = 0
+  , sd     = 20
+  , k      = 0
+  , et     = 0
+  , tblc   = 0 // Counts tables pulled from db for a run start
+  , state  = 0
+  , tables = {}
+  , rinfo  = {};
 
 var run_tables = ["controls","displays","conversions","inputs","outputs"];
+var active = {controls: 1, displays: 1};
 
 serverStart();
+
+// <-------------------------------------- End of Initialization Blob -------------------------------------->
 
 // Set Client Listeners
 io.sockets.on('connection', function (socket) {
@@ -133,18 +142,27 @@ function serverStart() {
 function db_pullTable(count) {
   db.query('SELECT * FROM ' + sql.escapeId(run_tables[count]), function (err, rows, fields) {
     if(err) throw err;
-    eval('rinfo.'+run_tables[count]+' = JSON.stringify(rows);');
+    eval('tables.'+run_tables[count]+' = rows;');
   });
 }
 
 // Called when you start a new run
 function setRun(data) {
   if(!run) {
-    rinfo.title = data.name;
+    tables.title = data.name;
     del  = 1000/data.rate;
-    rinfo.starttime = new Date();
-    et = rinfo.starttime.getTime() + data.duration*60*1000;
-    rinfo.endtime = new Date(et);
+    tables.starttime = new Date();
+    et = tables.starttime.getTime() + data.duration*60*1000;
+    tables.endtime = new Date(et);
+    rinfo = tables;
+    for(var prop in active) {
+        eval("rinfo."+prop+" = rinfo."+prop+"["+active[prop]+"];");
+    }
+    for(var prop in rinfo) {
+      if(prop.search("time") == -1)
+        eval("rinfo."+prop+" = JSON.stringify(rinfo."+prop+");");
+    }
+    console.log(rinfo);
     db.query("INSERT INTO runs SET ?",rinfo, function (err, result) {
       if(err) throw err;
       run = result.insertId;
@@ -190,6 +208,7 @@ function sampler() {
 
 // Control function
 function control(reading) {
+
 }
 
 function openGPIO() {

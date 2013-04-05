@@ -1,11 +1,12 @@
-var socket = io.connect('http://cc.acrudge.com');
-var inputs, outputs, conversions, displays, controls;
+// STORY: On connecting to server, server returns an object.
+// This object contains the contents of each of the config tables, in full
 
-socket.emit('db_request', { 'table': 'inputs' });
-socket.emit('db_request', { 'table': 'outputs' });
-socket.emit('db_request', { table: 'conversions' });
-socket.emit('db_request', { 'table': 'displays' });
-socket.emit('db_request', { 'table': 'controls' });
+var socket = io.connect('http://cc.acrudge.com');
+var tables
+
+socket.on('loadAllInfo', function(data) {
+	tables = data;
+})
 
 socket.on('db_return', function (data) {
     var buff = {};
