@@ -34,10 +34,9 @@ var conn   = 0
   , k      = 0
   , et     = 0
   , tblc   = 0 // Counts tables pulled from db for a run start
-  , state  = 1
   , tables = {}
   , rinfo  = {}
-  , rcont  = {};
+  , rcont  = {}; // Run control
 
 var run_tables = ["controls","displays","conversions","inputs","outputs"];
 var active     = {controls: 1, displays: 1};
@@ -162,7 +161,6 @@ function setRun(data) {
     et = tables.starttime.getTime() + data.duration*60*1000;
     tables.endtime = new Date(et);
     rinfo = JSON.parse(JSON.stringify(tables));
-    state = 1;
     for(var prop in active)
         eval("rinfo."+prop+" = tables."+prop+"["+(active[prop]-1)+"];");
     for(var prop in rinfo)
@@ -173,6 +171,7 @@ function setRun(data) {
     db.query("INSERT INTO runs SET ?",rinfo_s, function (err, result) {
       if(err) throw err;
       run = result.insertId;
+      rcont = {state: 1, begin: tables.starttime.getTime()};
       console.log("Starting run "+run);
       rend = setTimeout(function() {
         run = 0;
@@ -188,6 +187,7 @@ function setRun(data) {
 
 function killRun() {
   run = 0;
+  et = 0;
   clearTimeout(rend);
   io.sockets.emit('running', { run: 0 });
 }
@@ -217,7 +217,32 @@ function sampler() {
 
 // Control function
 function control(reading) {
-  console.log(rinfo.controls.definition[state]);
+  var next = 0;
+  var st = rinfo.controls.definition[rcont.state];
+  var td = (new Date()).getTime() - rcont.begin;
+  if(td >= st.min) {
+    if(td >= st.max)
+      next = 1;
+    else if(st.read_pin > 0 && st.read_value != "" && st.operator != "") {
+      var rdg = reading.split(',');
+      if(eval("st.read_pin "+st.operator+"= "+st.read_value))
+        next = 1;
+    }
+  }
+  console.log("Next: "+next);
+  if(next > 0) {
+    Object.keys(rinfo.controls.definition).length
+    var ns = (Object.keys(rinfo.controls.definition).length >= rcont.state + 1) ? rcont.state + 1 : 1;
+    setOutput(st.values);
+    rcont = {state: ns, begin: td+rcont.begin};
+    io.sockets.emit("state_change", rcont.state+1);
+  }
+  else
+    console.log("Time in state: "+td);
+}
+
+function setOutput(arr) {
+  console.log("Output: "+arr);
 }
 
 function openGPIO() {
