@@ -25,16 +25,17 @@ var conn = 0
   , buff = []
   , ddel = 1000
   , del  = 0
-  , st   = 20
+  , sd   = 20
   , k    = 0
   , et   = 0
-  , tblc = 0 // Counts tables pulled from for a run start
+  , tblc = 0 // Counts tables pulled from db for a run start
+  , state= 0
   , rinfo= {};
 
-var run_tables = new Array("controls","conversions","displays","inputs","outputs");
+var run_tables = ["controls","displays","conversions","inputs","outputs"];
 
-sampler();
-openGPIO();
+serverStart();
+
 // Set Client Listeners
 io.sockets.on('connection', function (socket) {
   conn++;
@@ -120,50 +121,44 @@ function db_insert(data) {
 
 // <--------------------- Andy's Section ----------------------->
 
-// This is called when you want to start a new run. It chooses the run # for this run
-function setRun (data) {
-  // data contains (float) rate, (float) duration, (string) name
-  if(!run) { // This is just in case the browser isn't yet aware that there's a run currently going
-    db.query("SELECT MAX(run) AS mrun FROM readings", function (err, rows, fields) {
+function serverStart() {
+  for (var i = 0 ; i < run_tables.length ; i++)
+    db_pullTable(i);
+
+  openGPIO();
+  sampler();
+}
+
+// Retrieves run info from the various tables as defined in "run_tables"
+function db_pullTable(count) {
+  db.query('SELECT * FROM ' + sql.escapeId(run_tables[count]), function (err, rows, fields) {
+    if(err) throw err;
+    eval('rinfo.'+run_tables[count]+' = JSON.stringify(rows);');
+  });
+}
+
+// Called when you start a new run
+function setRun(data) {
+  if(!run) {
+    rinfo.title = data.name;
+    del  = 1000/data.rate;
+    rinfo.starttime = new Date();
+    et = rinfo.starttime.getTime() + data.duration*60*1000;
+    rinfo.endtime = new Date(et);
+    db.query("INSERT INTO runs SET ?",rinfo, function (err, result) {
       if(err) throw err;
-      rinfo.title = data.name;
-      for (var i = 0 ; i < run_tables.length ; i++)
-        db_pullTable(i,data);
+      run = result.insertId;
+      console.log("Starting run "+run);
+      rend = setTimeout(function() {
+        run = 0;
+        et = 0;
+        io.sockets.emit('running', { run: 0 });
+      }, data.duration*60*1000);
+      io.sockets.emit('running', { run: run, end: et });
     });
   }
   else
     io.sockets.emit('running', { run: run, end: et });
-}
-
-// Retrieves run info from the various tables as defined in "run_tables"
-function db_pullTable(count,data) {
-  db.query('SELECT * FROM ' + sql.escapeId(run_tables[count]), function (err, rows, fields) {
-    if(err) throw err;
-    eval('rinfo.'+run_tables[count]+' = JSON.stringify(rows);');
-    tblc++;
-    if(tblc >= run_tables.length)
-      setupRun(data);
-  });
-}
-
-// Inserts the config info into the "runs" table (TBD) and initializes the run
-function setupRun(data) {
-  tblc = 0;
-  del  = 1000/data.rate;
-  rinfo.starttime = new Date();
-  et = rinfo.starttime.getTime() + data.duration*60*1000;
-  rinfo.endtime = new Date(et);
-  db.query("INSERT INTO runs SET ?",rinfo, function (err, result) {
-    if(err) throw err;
-    run = result.insertId;
-    console.log("Starting run "+run);
-    rend = setTimeout(function() {
-      run = 0;
-      et = 0;
-      io.sockets.emit('running', { run: 0 });
-    }, data.duration*60*1000);
-    io.sockets.emit('running', { run: run, end: et });
-  });
 }
 
 function killRun() {
@@ -190,12 +185,11 @@ function sampler() {
   else
     console.log('Not sampled');
   delay = delay ? delay : ddel;
-  setTimeout(sampler,delay-st);
+  setTimeout(sampler,delay-sd);
 }
 
 // Control function
 function control(reading) {
-  
 }
 
 function openGPIO() {
