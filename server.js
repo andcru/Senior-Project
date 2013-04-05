@@ -34,12 +34,14 @@ var conn   = 0
   , k      = 0
   , et     = 0
   , tblc   = 0 // Counts tables pulled from db for a run start
-  , state  = 0
+  , state  = 1
   , tables = {}
-  , rinfo  = {};
+  , rinfo  = {}
+  , rcont  = {};
 
 var run_tables = ["controls","displays","conversions","inputs","outputs"];
-var active = {controls: 1, displays: 1};
+var active     = {controls: 1, displays: 1};
+var pins       = [7,11,12,13,15,16,18,22];
 
 serverStart();
 
@@ -48,6 +50,7 @@ serverStart();
 // Set Client Listeners
 io.sockets.on('connection', function (socket) {
   conn++;
+  socket.emit('loadAllInfo', tables);
   io.sockets.emit('running', { run: run, end: et });
   console.log("Total connections: "+conn);
   socket.on('run_request', function (data) {
@@ -133,7 +136,6 @@ function db_insert(data) {
 function serverStart() {
   for (var i = 0 ; i < run_tables.length ; i++)
     db_pullTable(i);
-
   openGPIO();
   sampler();
 }
@@ -142,34 +144,39 @@ function serverStart() {
 function db_pullTable(count) {
   db.query('SELECT * FROM ' + sql.escapeId(run_tables[count]), function (err, rows, fields) {
     if(err) throw err;
+    if(active.hasOwnProperty(run_tables[count]))
+      for(var row in rows)
+        rows[row].definition = JSON.parse(rows[row].definition);
     eval('tables.'+run_tables[count]+' = rows;');
+    console.log('tabled');
   });
 }
 
 // Called when you start a new run
 function setRun(data) {
   if(!run) {
+    var rinfo_s = {};
     tables.title = data.name;
     del  = 1000/data.rate;
     tables.starttime = new Date();
     et = tables.starttime.getTime() + data.duration*60*1000;
     tables.endtime = new Date(et);
-    rinfo = tables;
-    for(var prop in active) {
-        eval("rinfo."+prop+" = rinfo."+prop+"["+active[prop]+"];");
-    }
-    for(var prop in rinfo) {
+    rinfo = JSON.parse(JSON.stringify(tables));
+    state = 1;
+    for(var prop in active)
+        eval("rinfo."+prop+" = tables."+prop+"["+(active[prop]-1)+"];");
+    for(var prop in rinfo)
       if(prop.search("time") == -1)
-        eval("rinfo."+prop+" = JSON.stringify(rinfo."+prop+");");
-    }
-    console.log(rinfo);
-    db.query("INSERT INTO runs SET ?",rinfo, function (err, result) {
+        eval("rinfo_s."+prop+" = JSON.stringify(rinfo."+prop+");");
+      else
+        eval("rinfo_s."+prop+" = rinfo."+prop+";");
+    db.query("INSERT INTO runs SET ?",rinfo_s, function (err, result) {
       if(err) throw err;
       run = result.insertId;
       console.log("Starting run "+run);
       rend = setTimeout(function() {
         run = 0;
-        et = 0;
+        et = 0; 
         io.sockets.emit('running', { run: 0 });
       }, data.duration*60*1000);
       io.sockets.emit('running', { run: run, end: et });
@@ -197,8 +204,10 @@ function sampler() {
       db.query(query);
       delay = del;
       control(buff);
+      console.log('Sampled & Stored');
     }
-    console.log('Sampled');
+    else
+      console.log('Sampled');
   }
   else
     console.log('Not sampled');
@@ -208,11 +217,10 @@ function sampler() {
 
 // Control function
 function control(reading) {
-
+  console.log(rinfo.controls.definition[state]);
 }
 
 function openGPIO() {
-  var pins = [7,11,12,13,15,16,18,22];
   for(var i=0;i<pins.length;i++) {
     console.log("Pin "+pins[i]);
     gpio.open(pins[i]);
