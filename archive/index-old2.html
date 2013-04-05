@@ -1,0 +1,49 @@
+<!doctype HTML>
+
+<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  var socket = io.connect('http://cc.acrudge.com');
+  socket.on('reading', function (data) {
+  	addText(data);
+  });
+  socket.on('running', function (data) {
+  	addText("Running: "+data.number+", End: "+data.end);
+  	showStatus(data.number);
+  });
+
+	$(document).ready(function() {
+		$(".do_run").click(doRun);
+	});
+
+	function doRun() {
+		if($(this).attr('id') == 'start')
+			socket.emit('run_request',{ duration: 1, extend: 0, rate: 3 });
+		else
+			socket.emit('run_request',{ duraction: 0 });
+	}
+
+	function addText(data) {
+		$("#resptext").html(data+"<br/>"+$("#resptext").html());
+		console.log(data);
+	}
+
+	function showStatus(run) {
+		if(run > 0) {
+			$("#run_0").hide();
+			$("#run_1").show();
+		}
+		else {
+			$("#run_0").show();
+			$("#run_1").hide();
+		}
+	}
+</script>
+
+<div id="run_0">Stopped</div>
+<div id="run_1" style="display:none">Running</div>
+
+<button class="do_run" id="start">Start</button>
+<button class="do_run" id="stop">Stop</button>
+
+<div id="resptext"></div>

@@ -3,6 +3,8 @@ var app = require('http').createServer(handler)
   , url = require('url')
   , io  = require('socket.io').listen(app)
   , fs  = require('fs')
+  , exec= require('child_process').exec
+  , gpio= require('pi-gpio')
   , rp  = require('/var/www/node/node_modules/ReadSPI/build/Release/ReadSPI.node')
   , sql = require('mysql')
   , db  = sql.createConnection({
@@ -11,6 +13,8 @@ var app = require('http').createServer(handler)
           password : 'ccsp703',
           database : 'ccnode'
           });
+
+exec("gpio unexportall");
 
 app.listen(8100);
 
@@ -22,6 +26,7 @@ var conn = 0
   , ddel = 1000
   , del  = 0
   , st   = 20
+  , k    = 0
   , et   = 0
   , tblc = 0 // Counts tables pulled from for a run start
   , rinfo= {};
@@ -29,6 +34,7 @@ var conn = 0
 var run_tables = new Array("controls","conversions","displays","inputs","outputs");
 
 sampler();
+openGPIO();
 // Set Client Listeners
 io.sockets.on('connection', function (socket) {
   conn++;
@@ -147,7 +153,6 @@ function setupRun(data) {
   rinfo.starttime = new Date();
   et = rinfo.starttime.getTime() + data.duration*60*1000;
   rinfo.endtime = new Date(et);
-  console.log(rinfo);
   db.query("INSERT INTO runs SET ?",rinfo, function (err, result) {
     if(err) throw err;
     run = result.insertId;
@@ -185,11 +190,18 @@ function sampler() {
   else
     console.log('Not sampled');
   delay = delay ? delay : ddel;
-  
   setTimeout(sampler,delay-st);
 }
 
 // Control function
 function control(reading) {
+  
+}
 
+function openGPIO() {
+  var pins = [7,11,12,13,15,16,18,22];
+  for(var i=0;i<pins.length;i++) {
+    console.log("Pin "+pins[i]);
+    gpio.open(pins[i]);
+  }
 }
