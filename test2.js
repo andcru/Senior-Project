@@ -24,7 +24,7 @@ var conn = 0
   , st   = 20
   , et   = 0
   , tblc = 0 // Counts tables pulled from for a run start
-  , rinfo= new Object();
+  , rinfo= {};
 
 var run_tables = new Array("controls","conversions","displays","inputs","outputs");
 
@@ -32,7 +32,7 @@ sampler();
 // Set Client Listeners
 io.sockets.on('connection', function (socket) {
   conn++;
-  io.sockets.emit('running', { number: run, end: et });
+  io.sockets.emit('running', { run: run, end: et });
   console.log("Total connections: "+conn);
   socket.on('run_request', function (data) {
     if(data.duration > 0)
@@ -116,50 +116,55 @@ function db_insert(data) {
 
 // This is called when you want to start a new run. It chooses the run # for this run
 function setRun (data) {
-  // data contains (float) rate, (float) duration
-  if(!run) {
-    var recent_run = 0;
+  // data contains (float) rate, (float) duration, (string) name
+  if(!run) { // This is just in case the browser isn't yet aware that there's a run currently going
     db.query("SELECT MAX(run) AS mrun FROM readings", function (err, rows, fields) {
       if(err) throw err;
-      recent_run = rows[0].mrun;
-      run = data.extend ? recent_run : recent_run + 1;
+      run = rows[0].mrun + 1;
+      rinfo.id = run;
+      rinfo.title = data.name;
       for (var i = 0 ; i < run_tables.length ; i++)
-        db_pullTable(i);
+        db_pullTable(i,data);
     });
   }
   else
-    io.sockets.emit('running', { number: run, end: et });
+    io.sockets.emit('running', { run: run, end: et });
 }
 
 // Retrieves run info from the various tables as defined in "run_tables"
-function db_pullTable(count) {
+function db_pullTable(count,data) {
   db.query('SELECT * FROM ' + sql.escapeId(run_tables[count]), function (err, rows, fields) {
     if(err) throw err;
-    rinfo.run_tables[count] = rows;
+    eval('rinfo.'+run_tables[count]+' = rows;');
     tblc++;
     if(tblc >= run_tables.length)
-      setupRun();
+      setupRun(data);
   });
 }
 
 // Inserts the config info into the "runs" table (TBD) and initializes the run
-function setupRun() {
+function setupRun(data) {
   tblc = 0;
   console.log("Starting run "+run);
   del  = 1000/data.rate;
-  et = Math.floor((new Date()).getTime()/1000 + data.duration*60);
-  rend = setTimeout(function() {
-    run = 0;
-    et = 0;
-    io.sockets.emit('running', { number: 0 });
-  }, Math.floor(data.duration*60*1000));
-  io.sockets.emit('running', { number: run, end: et });
+  rinfo.starttime = new Date();
+  et = rinfo.starttime.getTime() + data.duration*60*1000;
+  rinfo.endtime = new Date(et);
+  db.query("INSERT INTO runs SET ?",[rinfo], function (err, rows, fields) {
+    if(err) throw err;
+    rend = setTimeout(function() {
+      run = 0;
+      et = 0;
+      io.sockets.emit('running', { run: 0 });
+    }, data.duration*60*1000);
+    io.sockets.emit('running', { run: run, end: et });
+  });
 }
 
 function killRun() {
   run = 0;
   clearTimeout(rend);
-  io.sockets.emit('running', { number: 0 });
+  io.sockets.emit('running', { run: 0 });
 }
 
 // Sampler
