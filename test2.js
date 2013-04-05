@@ -120,8 +120,6 @@ function setRun (data) {
   if(!run) { // This is just in case the browser isn't yet aware that there's a run currently going
     db.query("SELECT MAX(run) AS mrun FROM readings", function (err, rows, fields) {
       if(err) throw err;
-      run = rows[0].mrun + 1;
-      rinfo.id = run;
       rinfo.title = data.name;
       for (var i = 0 ; i < run_tables.length ; i++)
         db_pullTable(i,data);
@@ -135,7 +133,7 @@ function setRun (data) {
 function db_pullTable(count,data) {
   db.query('SELECT * FROM ' + sql.escapeId(run_tables[count]), function (err, rows, fields) {
     if(err) throw err;
-    eval('rinfo.'+run_tables[count]+' = rows;');
+    eval('rinfo.'+run_tables[count]+' = JSON.stringify(rows);');
     tblc++;
     if(tblc >= run_tables.length)
       setupRun(data);
@@ -145,13 +143,15 @@ function db_pullTable(count,data) {
 // Inserts the config info into the "runs" table (TBD) and initializes the run
 function setupRun(data) {
   tblc = 0;
-  console.log("Starting run "+run);
   del  = 1000/data.rate;
   rinfo.starttime = new Date();
   et = rinfo.starttime.getTime() + data.duration*60*1000;
   rinfo.endtime = new Date(et);
-  db.query("INSERT INTO runs SET ?",[rinfo], function (err, rows, fields) {
+  console.log(rinfo);
+  db.query("INSERT INTO runs SET ?",rinfo, function (err, result) {
     if(err) throw err;
+    run = result.insertId;
+    console.log("Starting run "+run);
     rend = setTimeout(function() {
       run = 0;
       et = 0;
@@ -180,9 +180,12 @@ function sampler() {
       delay = del;
       control(buff);
     }
+    console.log('Sampled');
   }
+  else
+    console.log('Not sampled');
   delay = delay ? delay : ddel;
-  console.log('Sampled');
+  
   setTimeout(sampler,delay-st);
 }
 
