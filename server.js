@@ -154,7 +154,7 @@ function db_pullTable(count) {
 
 // Called when you start a new run
 function setRun(data) {
-  if(!run) {
+  if(run <= 0) {
     var rinfo_s = {};
     tables.title = data.name;
     del  = 1000/data.rate;
@@ -191,6 +191,7 @@ function killRun() {
   run = 0;
   et = 0;
   clearTimeout(rend);
+  clearTimeout(ctlend);
   io.sockets.emit('running', { run: 0 });
 }
 
@@ -237,16 +238,19 @@ function control(reading) {
 }
 
 function newState(start) {
-  var ns = (Object.keys(rinfo.controls.definition).length >= rcont.state + 1) ? rcont.state + 1 : 1;
-  var st = rinfo.controls.definition[ns];
-  var nt = (new Date()).getTime();
-  setOutput(st.values);
-  db.query("INSERT INTO state_history (run,state,timestamp) VALUES ("+run+","+ns+","+nt+")", function (err,result) {
-    if(err) throw err;
+  if(run > 0) {
+    var ns = (Object.keys(rinfo.controls.definition).length >= rcont.state + 1) ? rcont.state + 1 : 1;
+    var st = rinfo.controls.definition[ns];
+    var nt = (new Date()).getTime();
+    clearTimeout(ctlend);
     ctlend = setTimeout(newState,st.max);
     rcont = {state: ns, begin: nt};
+    setOutput(st.values);
     io.sockets.emit("state_change", ns);
-  });
+    db.query("INSERT INTO state_history (run,state,timestamp) VALUES ("+run+","+ns+","+nt+")", function (err,result) {
+      if(err) throw err;
+    });
+  }
 }
 
 function setOutput(arr) {
