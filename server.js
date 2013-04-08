@@ -50,7 +50,7 @@ serverStart();
 // Set Client Listeners
 io.sockets.on('connection', function (socket) {
   conn++;
-  socket.emit('loadAllInfo', tables);
+  socket.emit('loadAllInfo', {tables: tables, active: active});
   io.sockets.emit('running', { run: run, end: et });
   console.log("Total connections: "+conn);
   socket.on('run_request', function (data) {
@@ -75,27 +75,32 @@ io.sockets.on('connection', function (socket) {
 //Set Functions
 function handler (req, res) {
   var file = url.parse(req.url).pathname;
-  if (file == "/") { file = 'index.html';}
+  if (file == "/") { file = 'index';}
+  var ext = file.split('.');
+  var cext = ext.length;
+  if(cext == 1){
+    ext='html';
+    file = file+"."+ext;
+  }
+  else
+    ext = ext[cext-1];
+  switch(ext){
+    case 'js':
+      var mtype = 'application/javascript';
+      break;
+    case 'css':
+      var mtype = 'text/css';
+      break;
+    case 'html':
+      var mtype = 'text/html';
+      break;
+    default:
+      var mtype = 'text/plain';
+  }
   fs.readFile(__dirname + '/' + file, function (err, data) {
     if (err) {
       res.writeHead(500);
       return res.end('Error loading '+file);
-    }
-    var ext = file.split('.');
-    ext = ext[ext.length-1];
-    console.log("file_ext: "+ext);
-    switch(ext){
-      case 'js':
-        var mtype = 'application/javascript';
-        break;
-      case 'css':
-        var mtype = 'text/css';
-        break;
-      case 'html':
-        var mtype = 'text/html';
-        break;
-      default:
-        var mtype = 'text/plain';
     }
     console.log("file served: "+file);
     res.writeHead(200, { 'Content-Type': mtype });
@@ -144,11 +149,14 @@ function serverStart() {
 function db_pullTable(count) {
   db.query('SELECT * FROM ' + sql.escapeId(run_tables[count]), function (err, rows, fields) {
     if(err) throw err;
+    var buff = {};
     if(active.hasOwnProperty(run_tables[count]))
       for(var row in rows)
         rows[row].definition = JSON.parse(rows[row].definition);
-    eval('tables.'+run_tables[count]+' = rows;');
-    console.log('tabled');
+    for(var row in rows)
+      buff[rows[row].id] = rows[row];
+    eval('tables.'+run_tables[count]+' = buff;');
+    console.log('Table "'+run_tables[count]+'" loaded!');
   });
 }
 
@@ -173,7 +181,7 @@ function setRun(data) {
       if(err) throw err;
       run = result.insertId;
       rcont = {state: 0, begin: tables.starttime.getTime()};
-      newState(1);
+      newState();
       console.log("Starting run "+run);
       rend = setTimeout(function() {
         run = 0;
@@ -200,7 +208,6 @@ function sampler() {
   var delay;
   if( conn || run ) {
     buff = rp.read();
-    console.log(buff);
     io.sockets.emit('reading', buff);
     if( run ) {
       var query = "INSERT INTO readings (run,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12,r13,r14,r15,r16,timestamp) VALUES ("+run+","+buff+")";
@@ -226,27 +233,28 @@ function control(reading) {
   if(td >= st.min) {
     if(st.read_pin > 0 && st.read_value != "" && st.operator != "") {
       var rdg = reading.split(',');
-      if(eval("st.read_pin "+st.operator+"= "+st.read_value))
+      if(eval("rdg["+(st.read_pin-1)+"] "+st.operator+"= "+st.read_value))
         next = 1;
     }
   }
-  console.log("Next: "+next);
   if(next > 0)
-    newState(0);
+    newState();
   else
     console.log("Time in state: "+td);
 }
 
-function newState(start) {
+function newState() {
   if(run > 0) {
     var ns = (Object.keys(rinfo.controls.definition).length >= rcont.state + 1) ? rcont.state + 1 : 1;
     var st = rinfo.controls.definition[ns];
     var nt = (new Date()).getTime();
     clearTimeout(ctlend);
+    var prev_state = rcont.state;
     ctlend = setTimeout(newState,st.max);
     rcont = {state: ns, begin: nt};
+    var next_state = (Object.keys(rinfo.controls.definition).length >= rcont.state + 1) ? rcont.state + 1 : 1;
     setOutput(st.values);
-    io.sockets.emit("state_change", ns);
+    io.sockets.emit("state_change", {prev: prev_state, state: ns, next: next_state});
     db.query("INSERT INTO state_history (run,state,timestamp) VALUES ("+run+","+ns+","+nt+")", function (err,result) {
       if(err) throw err;
     });
@@ -260,7 +268,7 @@ function setOutput(arr) {
 
 function openGPIO() {
   for(var i=0;i<pins.length;i++) {
-    console.log("Pin "+pins[i]);
+    console.log("Pin "+pins[i]+" enabled as output!");
     gpio.open(pins[i]);
   }
 }

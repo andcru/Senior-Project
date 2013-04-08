@@ -81,8 +81,8 @@
 .has-switch label.switch-mini {
   padding-bottom: 4px;
   padding-top: 4px;
-  font-size: 10px;
-  line-height: 9px;
+  font-size: 12px;
+  line-height: 20px;
 }
 .has-switch span.switch-small,
 .has-switch label.switch-small {

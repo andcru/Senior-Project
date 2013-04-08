@@ -1,9 +1,9 @@
 body {
-	padding-top: 60px; 
+	padding-top: 20px; 
 }
 .container-fluid{
 	max-width:1280px;
-	min-width:320px;
+	min-width:1100px;
 	margin:auto auto;
 }
 input {
@@ -13,4 +13,62 @@ input {
 }
 select{
 	width:100%;
+}
+
+.row-fluid [class*="span_8_"] {
+  display: block;
+  width: 100%;
+  min-height: 30px;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  float: left;
+  margin-left: 3.225806451612903%;
+  *margin-left: 3.1451612903225805%;
+}
+.row-fluid [class*="span_8_"]:first-child {
+  margin-left: 0;
+}
+.row-fluid .controls-row [class*="span_8_"] + [class*="span_8_"] {
+  margin-left: 3.225806451612903%;
+}
+.row-fluid .span_8_8 {
+  width: 100%;
+  *width: 99.91935483870968%;
+}
+.row-fluid .span_8_7 {
+  width: 87.09677419354838%;
+  *width: 87.01612903225806%;
+}
+.row-fluid .span_8_6 {
+  width: 74.19354838709677%;
+  *width: 74.11290322580645%;
+}
+.row-fluid .span_8_5 {
+  width: 61.29032258064517%;
+  *width: 61.20967741935485%;
+}
+.row-fluid .span_8_4 {
+  width: 48.38709677419355%;
+  *width: 48.30645161290323%;
+}
+.row-fluid .span_8_3 {
+  width: 35.483870967741936%;
+  *width: 35.403225806451616%;
+}
+.row-fluid .span_8_2 {
+  width: 22.580645161290324%;
+  *width: 22.5%;
+}
+.row-fluid .span_8_1 {
+  width: 9.67741935483871%;
+  *width: 9.596774193548388%;
+}
+
+.btn-switch:focus,
+.btn-switch:active,
+.btn-switch.active {
+  color: #ffffff;
+  background-color: #0044cc;
+  *background-color: #003bb3;
 }
