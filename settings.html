@@ -27,6 +27,17 @@
 </head>
 
 <body>
+	<div id="loadingscreen" class="modal hide fade text-center" style="top:50%; height:170px; margin-top:-85px">
+		<div class="modal-header">
+			<h2>daq.sp2</h2>
+		</div>
+		<div class="modal-body">
+			<h3 id="loadtext">Loading...</h3>
+		</div>
+	</div>
+	<script>$("#loadingscreen").modal('show');</script>
+
+
 	<div class="container-fluid">
 		<div class="navbar">
 			<div class="navbar-inner">
@@ -72,84 +83,84 @@
 			<div class="row-fluid">
 				<div class="span1 text-center">1</div>
 				<div class="span2"><input id="input_1_name" type="text"></div>
-				<div class="span2"><select class="selectpicker" data-width="100%" id="input_1_conversion"></select class="selectpicker" data-width="100%"></div>
+				<div class="span2"><select class="selectpicker show-tick" data-width="100%" id="input_1_type"></select class="selectpicker show-tick" data-width="100%"></div>
 				<div class="span1 text-center"><div class="switch switch-mini"><input type="checkbox" id="input_1_active"></div></div>
 				<div class="span1 text-center">9</div>
 				<div class="span2"><input id="input_9_name" type="text"></div>
-				<div class="span2"><select class="selectpicker" data-width="100%" id="input_9_conversion"></select class="selectpicker" data-width="100%"></div>
+				<div class="span2"><select class="selectpicker show-tick" data-width="100%" id="input_9_type"></select class="selectpicker show-tick" data-width="100%"></div>
 				<div class="span1 text-center"><div class="switch switch-mini"><input type="checkbox" id="input_9_active"></div></div>
 			</div>
 			<div class="row-fluid">
 				<div class="span1 text-center">2</div>
 				<div class="span2"><input id="input_2_name" type="text"></div>
-				<div class="span2"><select class="selectpicker" data-width="100%" id="input_2_conversion"></select class="selectpicker" data-width="100%"></div>
+				<div class="span2"><select class="selectpicker show-tick" data-width="100%" id="input_2_type"></select class="selectpicker show-tick" data-width="100%"></div>
 				<div class="span1 text-center"><div class="switch switch-mini"><input type="checkbox" id="input_2_active"></div></div>
 				<div class="span1 text-center">10</div>
 				<div class="span2"><input id="input_10_name" type="text"></div>
-				<div class="span2"><select class="selectpicker" data-width="100%" id="input_10_conversion"></select class="selectpicker" data-width="100%"></div>
+				<div class="span2"><select class="selectpicker show-tick" data-width="100%" id="input_10_type"></select class="selectpicker show-tick" data-width="100%"></div>
 				<div class="span1 text-center"><div class="switch switch-mini"><input type="checkbox" id="input_10_active"></div></div>
 			</div>
 			<div class="row-fluid">
 				<div class="span1 text-center">3</div>
 				<div class="span2"><input id="input_3_name" type="text"></div>
-				<div class="span2"><select class="selectpicker" data-width="100%" id="input_3_conversion"></select class="selectpicker" data-width="100%"></div>
+				<div class="span2"><select class="selectpicker show-tick" data-width="100%" id="input_3_type"></select class="selectpicker show-tick" data-width="100%"></div>
 				<div class="span1 text-center"><div class="switch switch-mini"><input type="checkbox" id="input_3_active"></div></div>
 				<div class="span1 text-center">11</div>
 				<div class="span2"><input id="input_11_name" type="text"></div>
-				<div class="span2"><select class="selectpicker" data-width="100%" id="input_11_conversion"></select class="selectpicker" data-width="100%"></div>
+				<div class="span2"><select class="selectpicker show-tick" data-width="100%" id="input_11_type"></select class="selectpicker show-tick" data-width="100%"></div>
 				<div class="span1 text-center"><div class="switch switch-mini"><input type="checkbox" id="input_11_active"></div></div>
 			</div>
 			<div class="row-fluid">
 				<div class="span1 text-center">4</div>
 				<div class="span2"><input id="input_4_name" type="text"></div>
-				<div class="span2"><select class="selectpicker" data-width="100%" id="input_4_conversion"></select class="selectpicker" data-width="100%"></div>
+				<div class="span2"><select class="selectpicker show-tick" data-width="100%" id="input_4_type"></select class="selectpicker show-tick" data-width="100%"></div>
 				<div class="span1 text-center"><div class="switch switch-mini"><input type="checkbox" id="input_4_active"></div></div>
 				<div class="span1 text-center">12</div>
 				<div class="span2"><input id="input_12_name" type="text"></div>
-				<div class="span2"><select class="selectpicker" data-width="100%" id="input_12_conversion"></select class="selectpicker" data-width="100%"></div>
+				<div class="span2"><select class="selectpicker show-tick" data-width="100%" id="input_12_type"></select class="selectpicker show-tick" data-width="100%"></div>
 				<div class="span1 text-center"><div class="switch switch-mini"><input type="checkbox" id="input_12_active"></div></div>
 			</div>
 			<div class="row-fluid">
 				<div class="span1 text-center">5</div>
 				<div class="span2"><input id="input_5_name" type="text"></div>
-				<div class="span2"><select class="selectpicker" data-width="100%" id="input_5_conversion"></select class="selectpicker" data-width="100%"></div>
+				<div class="span2"><select class="selectpicker show-tick" data-width="100%" id="input_5_type"></select class="selectpicker show-tick" data-width="100%"></div>
 				<div class="span1 text-center"><div class="switch switch-mini"><input type="checkbox" id="input_5_active"></div></div>
 				<div class="span1 text-center">13</div>
 				<div class="span2"><input id="input_13_name" type="text"></div>
-				<div class="span2"><select class="selectpicker" data-width="100%" id="input_13_conversion"></select class="selectpicker" data-width="100%"></div>
+				<div class="span2"><select class="selectpicker show-tick" data-width="100%" id="input_13_type"></select class="selectpicker show-tick" data-width="100%"></div>
 				<div class="span1 text-center"><div class="switch switch-mini"><input type="checkbox" id="input_13_active"></div></div>
 			</div>
 			<div class="row-fluid">
 				<div class="span1 text-center">6</div>
 				<div class="span2"><input id="input_6_name" type="text"></div>
-				<div class="span2"><select class="selectpicker" data-width="100%" id="input_6_conversion"></select class="selectpicker" data-width="100%"></div>
+				<div class="span2"><select class="selectpicker show-tick" data-width="100%" id="input_6_type"></select class="selectpicker show-tick" data-width="100%"></div>
 				<div class="span1 text-center"><div class="switch switch-mini"><input type="checkbox" id="input_6_active"></div></div>
 				<div class="span1 text-center">14</div>
 				<div class="span2"><input id="input_14_name" type="text"></div>
-				<div class="span2"><select class="selectpicker" data-width="100%" id="input_14_conversion"></select class="selectpicker" data-width="100%"></div>
+				<div class="span2"><select class="selectpicker show-tick" data-width="100%" id="input_14_type"></select class="selectpicker show-tick" data-width="100%"></div>
 				<div class="span1 text-center"><div class="switch switch-mini"><input type="checkbox" id="input_14_active"></div></div>
 			</div>
 			<div class="row-fluid">
 				<div class="span1 text-center">7</div>
 				<div class="span2"><input id="input_7_name" type="text"></div>
-				<div class="span2"><select class="selectpicker" data-width="100%" id="input_7_conversion"></select class="selectpicker" data-width="100%"></div>
+				<div class="span2"><select class="selectpicker show-tick" data-width="100%" id="input_7_type"></select class="selectpicker show-tick" data-width="100%"></div>
 				<div class="span1 text-center"><div class="switch switch-mini"><input type="checkbox" id="input_7_active"></div></div>
 				<div class="span1 text-center">15</div>
 				<div class="span2"><input id="input_15_name" type="text"></div>
-				<div class="span2"><select class="selectpicker" data-width="100%" id="input_15_conversion"></select class="selectpicker" data-width="100%"></div>
+				<div class="span2"><select class="selectpicker show-tick" data-width="100%" id="input_15_type"></select class="selectpicker show-tick" data-width="100%"></div>
 				<div class="span1 text-center"><div class="switch switch-mini"><input type="checkbox" id="input_15_active"></div></div>
 			</div>
 			<div class="row-fluid">
 				<div class="span1 text-center">8</div>
 				<div class="span2"><input id="input_8_name" type="text"></div>
-				<div class="span2"><select class="selectpicker" data-width="100%" id="input_8_conversion"></select class="selectpicker" data-width="100%"></div>
+				<div class="span2"><select class="selectpicker show-tick" data-width="100%" id="input_8_type"></select class="selectpicker show-tick" data-width="100%"></div>
 				<div class="span1 text-center"><div class="switch switch-mini"><input type="checkbox" id="input_8_active"></div></div>
 				<div class="span1 text-center">16</div>
 				<div class="span2"><input id="input_16_name" type="text"></div>
-				<div class="span2"><select class="selectpicker" data-width="100%" id="input_16_conversion"></select class="selectpicker" data-width="100%"></div>
+				<div class="span2"><select class="selectpicker show-tick" data-width="100%" id="input_16_type"></select class="selectpicker show-tick" data-width="100%"></div>
 				<div class="span1 text-center"><div class="switch switch-mini"><input type="checkbox" id="input_16_active"></div></div>
 			</div>
-			<button class="btn btn-block">Save Changes</button>
+			<button class="btn btn-block" id="savechanges_inputs">save changes</button>
 		</div>
 	</div>
 
@@ -164,15 +175,10 @@
 				<div class="span1"><h4>units</h4></div>
 				<div class="span1"><h4>delete</h4></div>
 			</div>
-			<div class="row-fluid text-center">
-				<div class="span2"><input id="conversion_name" type="text"></div>				
-				<div class="span8"><input id="conversion_equation" type="text"></div>
-				<div class="span1"><input id="conversion_conversion_units" type="text"></div>
-				<div class="span1"><button class="btn btn-block btn-danger" id="conversion_delete">&times</button></div>
-			</div>
+			<div id="list-conversions"></div>
 			<div class="row-fluid">
 				<button class="btn span2 btn-primary">New Conversion</button>
-				<button class="btn span10">Save Changes</button>
+				<button class="btn span10" id="savechanges_conversions">save changes</button>
 			</div>
 		</div>
 	</div>
@@ -223,7 +229,7 @@
 				<div class="span4"><input id="output_8_name" type="text"></div>
 				<div class="span1 text-center"><div class="switch switch-mini"><input type="checkbox" id="output_8_active"></div></div>
 			</div>
-			<button class="btn btn-block">save changes</button>
+			<button class="btn btn-block" id="savechanges_outputs">save changes</button>
 		</div>
 	</div>
 
@@ -234,23 +240,24 @@
 			<h2>controls</h2>
 			<div class="row-fluid">
 				<div class="span2 text-right"><h4>control scheme:</h4></div>
-				<div class="span6"><select class="selectpicker" data-width="100%" id="control_config_select"></select class="selectpicker" data-width="100%"></div>
+				<div class="span6"><select class="selectpicker show-tick" data-width="100%" id="control_config_select"></select class="selectpicker show-tick" data-width="100%"></div>
 				<button class="span1 btn btn-danger">delete</button>
 				<button class="span3 btn btn-primary">create new control scheme</button>
 			</div>
 			<hr>
 			<div class="row-fluid text-center">
 				<div class="span1"><h4>state</h4></div>
-				<div class="span3"><h4>name</h4></div>
+				<div class="span2"><h4>name</h4></div>
 				<div class="span3"><h4>outputs</h4></div>
 				<div class="span3"><h4>condition to skip to next state</h4></div>
 				<div class="span1"><h4>mintime</h4></div>
 				<div class="span1"><h4>maxtime</h4></div>
+				<div class="span1"><h4>delete</h4></div>
 			</div>
-			<div id="controls-list"></div>
+			<div id="list-controls"></div>
 			<div class="row-fluid">
 				<button class="btn btn-primary span2">add new state</button>			
-				<button class="btn span10">save changes</button>
+				<button class="btn span10" id="savechanges_controls">save changes</button>
 			</div>
 		</div>
 	</div>
