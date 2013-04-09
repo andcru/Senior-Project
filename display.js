@@ -10,7 +10,9 @@ var   recent_time
 	, plot = []
 	, tables = {}
 	, data_converted = []
-	, data_len_max = 100
+	, data_len_max = 500
+    , def_samp_rate = 1000
+    , no_run_text
     , nulldata = [[null],[null],[null],[null],[null],[null],[null],[null]]
     , run_inputs = ["name","rate","duration"];
 
@@ -44,6 +46,7 @@ $(document).ready(function(){
         $('#textdisplay').toggle();
     });
     $(".run_control").click(doRun);
+    no_run_text = $("#time_remain").html();
 });
 
 function doRun() {
@@ -65,6 +68,7 @@ function doRun() {
 function getData(data){
 	var vals = data.split(",");
     var time = vals.pop();
+    var actvals = [];
 	recent_time = convertTime(time);
     $.each(tables.inputs, function(k,v) {
     	if(v.active > 0) {
@@ -73,22 +77,28 @@ function getData(data){
 	            holder.shift();   
 	        holder.push([time, convertData(vals[k], v.type)]);
 	        data_converted[k] = holder;
+            actvals[k] = vals[k];
     	}
     });
     updatePlots();
-    updateDisplayValues(vals);
+    updateDisplayValues(actvals);
 }
 
 function updateTimer() {
-    if(rem_time <= 0) {
-        rem_time = 0;
-        clearInterval(timer);
+    var tr;
+    if(run.run > 0) {
+        if(rem_time <= 0) {
+            rem_time = 0;
+            clearInterval(timer);
+        }
+        var hr = Math.floor(rem_time/60/60);
+        var mi = Math.floor(rem_time/60 - hr*60);
+        var se = Math.floor(rem_time-hr*60*60-mi*60);
+        tr = hr+":"+pad(mi.toString(),2)+":"+pad(se.toString(),2);
+        rem_time--;
     }
-    var hr = Math.floor(rem_time/60/60);
-    var mi = Math.floor(rem_time/60 - hr*60);
-    var se = Math.floor(rem_time-hr*60*60-mi*60);
-    var tr = hr+":"+pad(mi.toString(),2)+":"+pad(se.toString(),2);
-    rem_time--;
+    else
+        tr = no_run_text;
     $("#time_remain").html(tr);
 }
 function pad (str, max) {
@@ -155,13 +165,15 @@ function onRunStart() {
 }
 
 function onRunEnd() {
-    clearInterval(timer);
+    run = {};
     rem_time = 0;
     updateTimer();
+    sr = def_samp_rate;
     toggleDisabled("startNewRun",1);
     toggleDisabled("stopRun",0);
     for(var i=0; i<run_inputs.length; i++)
         toggleDisabled(run_inputs[i],1);
+    $('span[id^="control_"]').html("");
 }
 
 function convertTime(timestamp){
@@ -169,7 +181,7 @@ function convertTime(timestamp){
 }
 
 function convertData(data,type){
-    var x = data;
+    var x = parseInt(data);
     return eval(tables.conversions[type].equation);
 }
 
@@ -199,15 +211,16 @@ function makeDisplayValues(){
 }
 
 function updateDisplayValues(arr) {
+    console.log(arr);
     $.each(tables.inputs, function(k,v){
-        $("#signal"+k+"_val").html(parseFloat(arr[k]).toFixed(2));
+        $("#signal"+k+"_val").html(convertData(arr[k],v.type).toFixed(2));
     });
 }
 
 function updateDisplayStates(data) {
     $.each(data, function(k,v) {
-        $("#control_"+k).html(tables.controls[v].title);
-        console.log(k+" "+v);
+        if(v > 0 && k != 'begin')
+            $("#control_"+k).html(tables.controls[active.controls].definition[v].name);
     });
 }
 
@@ -247,10 +260,10 @@ function toggleDisabled(elem_id,force) {
 
 // ------------------------------------------------- Getting Configs ----------------------------------------------------- //
 
-function getInputs(notdatasetup) {
+function getInputs() {
     console.log("start: getInputs");
     $.each(tables.inputs,function(k,v){
-        if(!notdatasetup)
+        if(!run.run && v.active > 0)
             data_converted[k] = [];
     });
     console.log("finish: getInputs");

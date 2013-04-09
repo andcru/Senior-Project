@@ -48,7 +48,9 @@ serverStart();
 io.sockets.on('connection', function (socket) {
   conn++;
   socket.emit('loadAllInfo', {tables: tables, active: active});
-  io.sockets.emit('running', { run: run, end: et, now: (new Date()).getTime() });
+  io.sockets.emit('running', { run: run, end: et, now: (new Date()).getTime(), del: del });
+  if(run > 0)
+    socket.emit("state_change", rcont);
   console.log("Total connections: "+conn);
   socket.on('run_request', function (data) {
     if(data.duration > 0)
@@ -216,11 +218,11 @@ function setRun(data) {
         et = 0; 
         io.sockets.emit('running', { run: 0 });
       }, data.duration*60*1000);
-      io.sockets.emit('running', { run: run, end: et, now: tables.starttime.getTime() });
+      io.sockets.emit('running', { run: run, end: et, now: tables.starttime.getTime(), del: del });
     });
   }
   else
-    io.sockets.emit('running', { run: run, end: et, now: (new Date()).getTime() });
+    io.sockets.emit('running', { run: run, end: et, now: (new Date()).getTime(), del: del });
 }
 
 function killRun() {
@@ -258,7 +260,7 @@ function control(reading) {
   var next = 0;
   var st = rinfo.controls.definition[rcont.state];
   var td = (new Date()).getTime() - rcont.begin;
-  if(td >= st.min) {
+  if(td >= st.min*1000) {
     if(st.read_pin > 0 && st.read_value != "" && st.operator != "") {
       var rdg = reading.split(',');
       if(eval("rdg["+(st.read_pin-1)+"] "+st.operator+"= "+st.read_value))
@@ -278,11 +280,11 @@ function newState() {
     var nt = (new Date()).getTime();
     clearTimeout(ctlend);
     var prev_state = rcont.state;
-    ctlend = setTimeout(newState,st.max);
-    rcont = {state: ns, begin: nt};
-    var next_state = (Object.keys(rinfo.controls.definition).length >= rcont.state + 1) ? rcont.state + 1 : 1;
+    var next_state = (Object.keys(rinfo.controls.definition).length >= ns + 1) ? ns + 1 : 1;
+    ctlend = setTimeout(newState,st.max*1000);
+    rcont = {state: ns, begin: nt, prev: prev_state, next: next_state};
     setOutput(st.values);
-    io.sockets.emit("state_change", {prev: prev_state, state: ns, next: next_state});
+    io.sockets.emit("state_change", rcont);
     db.query("INSERT INTO state_history (run,state,timestamp) VALUES ("+run+","+ns+","+nt+")", function (err,result) {
       if(err) throw err;
     });
