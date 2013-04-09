@@ -57,8 +57,8 @@
         	<div class="navbar-inner">
 				<div class="navbar-form pull-right">
 					<input name="name" id="name" type="text" class="span2" placeholder="Name of Run" style="width:250px">
-					<input name="rate" id="rate" type="number" class="span2" placeholder="Sampling Rate (Hz)">
-				  	<input name="duration" id="duration" type="number" class="span2" placeholder="Duration (min)">
+					<input name="rate" id="rate" min="0" step="any" max="20" type="number" class="span2" placeholder="Sampling Rate (Hz)">
+				  	<input name="duration" id="duration" step="any" min="0" type="number" class="span2" placeholder="Duration (min)">
 				  	<div class="btn-group">
 				  		<button id="startNewRun" class="btn run_control"><i class="icon-step-forward"></i> New Run</button>
 				  	</div>

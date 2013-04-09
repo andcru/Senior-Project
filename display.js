@@ -6,18 +6,18 @@ var   recent_time
     , run = {}
     , timer
     , rem_time
-	, active
-	, plot = []
-	, tables = {}
-	, data_converted = []
-	, data_len_max = 500
+    , active
+    , plot = []
+    , tables = {}
+    , data_converted = []
+    , data_len_max = 500
     , def_samp_rate = 1000
     , no_run_text
     , nulldata = [[null],[null],[null],[null],[null],[null],[null],[null]]
     , run_inputs = ["name","rate","duration"];
 
 socket.on('reading', function(data) {
-	getData(data);
+    getData(data);
 });
 
 socket.on('state_change', function(data) {
@@ -33,10 +33,10 @@ socket.on('running', function(data) {
 });
 
 socket.on('loadAllInfo', function(data) {
-	console.log('Displays table received');
-	tables = data.tables;
+    console.log('Displays table received');
+    tables = data.tables;
     active = data.active;
-	getInputs();
+    getInputs();
     setConfig(active.displays);
     makeDisplayValues();
 });
@@ -66,19 +66,19 @@ function doRun() {
 }
 
 function getData(data){
-	var vals = data.split(",");
+    var vals = data.split(",");
     var time = vals.pop();
     var actvals = [];
-	recent_time = convertTime(time);
+    recent_time = convertTime(time);
     $.each(tables.inputs, function(k,v) {
-    	if(v.active > 0) {
-	        var holder = data_converted[k];
-	        if( holder.length == data_len_max )
-	            holder.shift();   
-	        holder.push([time, convertData(vals[k], v.type)]);
-	        data_converted[k] = holder;
+        if(v.active > 0) {
+            var holder = data_converted[k];
+            if( holder.length == data_len_max )
+                holder.shift();   
+            holder.push([time, convertData(vals[k], v.type)]);
+            data_converted[k] = holder;
             actvals[k] = vals[k];
-    	}
+        }
     });
     updatePlots();
     updateDisplayValues(actvals);
@@ -97,8 +97,10 @@ function updateTimer() {
         tr = hr+":"+pad(mi.toString(),2)+":"+pad(se.toString(),2);
         rem_time--;
     }
-    else
+    else {
         tr = no_run_text;
+        clearInterval(timer);
+    }
     $("#time_remain").html(tr);
 }
 function pad (str, max) {
@@ -142,9 +144,9 @@ function plot_options(title,xlabel,ylabel,ymin,ymax) {
 }
 
 function makePlot(num) {
-	$("#plot_wrapper").append("<div class='well well-small'><div class='plot' id='plot"+num+"' style='height:350px;width:900px;'></div></div>");
-	options = new plot_options(tables.displays[active.displays].definition[num].title,tables.displays[active.displays].definition[num].xaxislabel,tables.displays[active.displays].definition[num].yaxislabel,tables.displays[active.displays].definition[num].ymin,tables.displays[active.displays].definition[num].ymax);
-	plot[num] = $.jqplot("plot"+num,nulldata,options);
+    $("#plot_wrapper").append("<div class='well well-small'><div class='plot' id='plot"+num+"' style='height:350px;width:900px;'></div></div>");
+    options = new plot_options(tables.displays[active.displays].definition[num].title,tables.displays[active.displays].definition[num].xaxislabel,tables.displays[active.displays].definition[num].yaxislabel,tables.displays[active.displays].definition[num].ymin,tables.displays[active.displays].definition[num].ymax);
+    plot[num] = $.jqplot("plot"+num,nulldata,options);
 }
 
 function setConfig(num){

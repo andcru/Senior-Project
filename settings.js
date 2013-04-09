@@ -10,13 +10,12 @@ $(document).ready(function(){
 		var sc = $(this).attr('id').split('_');
 		loadWrap('saving '+sc[1], 1, updateTable, sc[1]);
 	});
-	$("button[id$='delete']").on('click', function(){
+	$("#conversions-container").on('click', "button[id$='delete']", function(){
 		var sc = $(this).attr('id').split('_');
 		console.log('hi');
-		$('#row_'+sc[0]+'_'+sc[1]).remove();
+		$('#row_'+sc[0]+'_'+sc[1]).after('<p>restore?</p>').children().hide();
 	});
 	$("#new_conversion").on('click', function(){
-		console.log('new!');
 		addConversionRow();
 	});
 });
@@ -120,13 +119,14 @@ function addControlRow(id, def){
 	s += $.sprintf('<option value="0" %s>None</option>', def.read_pin == 0 ? 'selected' : '');
 	for(var i = 1; i<=16; i++)
 		s += $.sprintf('<option %s value="%s" %s>(%s) %s</option>', active_inputs[i-1] ? '' : 'disabled', i, i==def.read_pin ? 'selected' : '', i, tables.inputs[i].name)	;
-	s += $.sprintf('</select><select %s class="selectpicker show-tick dropup span3" id="control_%s_operator"><option %s value="<"><</option><option %s value=">">></option></select> <input %s class="span4" type="text" id="control_%s_read_value" value="%s"></div><div class="span1"><input class="span12" type="number" id="control_%s_min" value="%s"></div><div class="span1"><input class="span12" type="number" id="control_%s_max" value="%s"></div>', def.read_pin ? '' : 'disabled', id, def.operator == '<' ? 'selected' : '', def.operator == '>' ? 'selected' : '', def.read_pin ? '' : 'disabled', id, def.read_value, id, def.min, id, def.max);
+	s += $.sprintf('</select><select %s class="selectpicker show-tick dropup span3" id="control_%s_operator"><option %s value="<"><</option><option %s value=">">></option></select> <input %s class="span4" type="text" id="control_%s_read_value" value="%s"></div><div class="span1"><input class="span12" type="number" min="0" step="any" id="control_%s_min" value="%s"></div><div class="span1"><input class="span12" type="number" min="0" step="any" id="control_%s_max" value="%s"></div>', def.read_pin ? '' : 'disabled', id, def.operator == '<' ? 'selected' : '', def.operator == '>' ? 'selected' : '', def.read_pin ? '' : 'disabled', id, def.read_value, id, def.min, id, def.max);
 	s += $.sprintf('<button class="btn span1 btn-danger" id="control_%s_delete">delete</button></div>',id);
 	$('#list-controls').append(s);
 }
 
 function addConversionRow(conv){
 	//conv ={id,name,equation,units}
+	if(typeof(conv)!="object"){conv = {};}
 	conv = {
 		id:       typeof(conv.id)       === "undefined" ? nextConvid() : conv.id,
 		name:     typeof(conv.name)	    === "undefined" ? ''           : conv.name,
@@ -142,6 +142,7 @@ function nextConvid(){
 	$('[id^="conversion_"]').each(function(){
 		max = Math.max(max, parseInt($(this).attr('id').split('_')[1]));
 	})
+	return max+1;
 }
 
 function updateTable(table){

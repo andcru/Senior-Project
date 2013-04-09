@@ -7,11 +7,11 @@ var csv = require('ya-csv')
           database : 'ccnode'
           });
 
-var 	run = 152
-	,	runvars = {}
+var 	runvars = {}
 	,	rundata = {}
 	,	csvdata = []
 	,	min_id
+	,	min_time
 	,	used_inputs = []
 	,	headings = ["Reading ID"]
 	,	writer
@@ -20,14 +20,19 @@ var 	run = 152
 var run_tables = ["controls","displays","conversions","inputs","outputs"];
 var active     = {controls: 1, displays: 1};
 
+var run = process.argv[2];
 loadRun();
 
 function loadRun() {
   	db.query('SELECT * FROM runs WHERE id = ' + sql.escape(run), function (err, rows, fields) {
 	    if(err) throw err;
 	    runvars = rows[0];
-	    writer = new csv.createCsvFileWriter('runs/'+runvars.id+'.csv');
-	    parseData();
+	    if(runvars.id == run) {
+		    writer = new csv.createCsvFileWriter('runs/'+runvars.id+'.csv');
+		    parseData();
+		}
+		else
+			process.exit(1);
 	});
 }
 
@@ -44,13 +49,14 @@ function loadData() {
 			used_inputs.push("r"+k); 
 			headings.push(runvars.inputs[k].name+" ("+runvars.conversions[runvars.inputs[k].type].units+")");
 		}
-	headings.push("Timestamp");
+	headings.push("Time (s)");
 	db.query('SELECT id,'+ used_inputs +',timestamp FROM readings WHERE run = ' + sql.escape(run), function (err, rows, fields) {
 	    if(err) throw err;
 	    rundata = rows;
-	    db.query('SELECT MIN(id) AS mr FROM readings WHERE run = ' + sql.escape(run), function (err,rows,fields) {
+	    db.query('SELECT MIN(id) AS mr, MIN(timestamp) AS mt FROM readings WHERE run = ' + sql.escape(run), function (err,rows,fields) {
 	    	if(err) throw err;
 	    	min_id = rows[0].mr;
+	    	min_time = rows[0].mt;
 	    	convertData();
 	    });
 	});
@@ -63,7 +69,10 @@ function convertData() {
 		for(var i = 1; i <= used_inputs.length; i++) {
 			rdg.push(convert(row["r"+i],runvars.inputs[i].type));
 		}
-		rdg.push(row.timestamp);
+		//var date = new Date(row.timestamp);
+		//var excel_format = date.getFullYear()+"-"+(date.getMonth()+1)+"-"+date.getDate()+" "+date.getHours()+":"+date.getMinutes()+":"+date.getSeconds()+"."+date.getMilliseconds();
+		var run_time = (row.timestamp - min_time)/1000;
+		rdg.push(run_time);
 		csvdata.push(rdg);
 	}
 	makeCSV();
@@ -81,6 +90,7 @@ function makeCSV() {
 	}
 	writer.writeStream.end();
 	writer.writeStream.on('close', function() {
-		process.exit(1);
+		console.log("1");
+		process.exit();
 	});
 }

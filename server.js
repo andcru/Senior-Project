@@ -214,9 +214,7 @@ function setRun(data) {
       newState();
       console.log("Starting run "+run);
       rend = setTimeout(function() {
-        run = 0;
-        et = 0; 
-        io.sockets.emit('running', { run: 0 });
+        killRun();
       }, data.duration*60*1000);
       io.sockets.emit('running', { run: run, end: et, now: tables.starttime.getTime(), del: del });
     });
@@ -226,11 +224,21 @@ function setRun(data) {
 }
 
 function killRun() {
+  var old_run = run;
   run = 0;
   et = 0;
   clearTimeout(rend);
   clearTimeout(ctlend);
   io.sockets.emit('running', { run: 0 });
+  makeCSV(old_run);
+}
+
+function makeCSV(old_run) {
+  exec("node makecsv.js "+old_run, function (error, stdout, stderr) {
+    if (error === null && stderr == "") {
+      io.sockets.emit("new_csv",{ id: old_run });
+    }
+  });
 }
 
 // Sampler
