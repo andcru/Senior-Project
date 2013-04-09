@@ -3,39 +3,69 @@
 var socket = io.connect('http://cc.acrudge.com');
 
 var   recent_time
-	, active_config
+    , run = {}
+    , timer
+    , rem_time
+	, active
 	, plot = []
 	, tables = {}
 	, data_converted = []
-	, data_len_max = 100;
+	, data_len_max = 100
+    , nulldata = [[null],[null],[null],[null],[null],[null],[null],[null]]
+    , run_inputs = ["name","rate","duration"];
 
 socket.on('reading', function(data) {
 	getData(data);
 });
 
+socket.on('state_change', function(data) {
+    updateDisplayStates(data);
+});
+
+socket.on('running', function(data) {
+    run = data;
+    if(run.run > 0)
+        onRunStart();
+    else
+        onRunEnd();
+});
+
 socket.on('loadAllInfo', function(data) {
 	console.log('Displays table received');
 	tables = data.tables;
+    active = data.active;
 	getInputs();
+    setConfig(active.displays);
+    makeDisplayValues();
 });
 
 $(document).ready(function(){
-	$('#textdisplay').hide();
     $('#textdisplay_toggle').on('click', function(){
         $('#textdisplay').toggle();
     });
-
-    $(document).ready(function(){
-	  var plot1 = $.jqplot ('plot_wrapper', [[3,7,9,1,4,6,8,2,5]]);
-	});
+    $(".run_control").click(doRun);
 });
+
+function doRun() {
+    var outs = {};
+    if(!$(this).hasClass("disabled")) {
+        if($(this).attr('id') == 'startNewRun') {
+            for(var i=0; i<run_inputs.length; i++)
+                if($("#"+run_inputs[i]).val())
+                    outs[run_inputs[i]] = $("#"+run_inputs[i]).val();
+                else
+                    return false;
+        }
+        else
+            outs.duration = 0;
+        socket.emit('run_request',outs);
+    }
+}
 
 function getData(data){
 	var vals = data.split(",");
-	var ts = vals.pop();
-	//console.log(ts);
-	//console.log(vals);
-    var time = convertTime(ts);
+    var time = vals.pop();
+	recent_time = convertTime(time);
     $.each(tables.inputs, function(k,v) {
     	if(v.active > 0) {
 	        var holder = data_converted[k];
@@ -43,12 +73,26 @@ function getData(data){
 	            holder.shift();   
 	        holder.push([time, convertData(vals[k], v.type)]);
 	        data_converted[k] = holder;
-	        console.log(data_converted[k]);
     	}
     });
-    //console.log(data_converted.toString());
-    //updatePlots();
-    //updateTextDisplay();
+    updatePlots();
+    updateDisplayValues(vals);
+}
+
+function updateTimer() {
+    if(rem_time <= 0) {
+        rem_time = 0;
+        clearInterval(timer);
+    }
+    var hr = Math.floor(rem_time/60/60);
+    var mi = Math.floor(rem_time/60 - hr*60);
+    var se = Math.floor(rem_time-hr*60*60-mi*60);
+    var tr = hr+":"+pad(mi.toString(),2)+":"+pad(se.toString(),2);
+    rem_time--;
+    $("#time_remain").html(tr);
+}
+function pad (str, max) {
+    return str.length < max ? pad("0" + str, max) : str;
 }
 
 function plot_options(title,xlabel,ylabel,ymin,ymax) {
@@ -61,7 +105,7 @@ function plot_options(title,xlabel,ylabel,ymin,ymax) {
             renderer: $.jqplot.DateAxisRenderer,
             numberTicks: 4,
             tickOptions: {
-                formatString: "%I:%M:%S.%N"
+                formatString: "%I:%M:%S"
             },
             label: xlabel,
             labelRenderer: $.jqplot.CanvasAxisLabelRenderer,
@@ -88,32 +132,50 @@ function plot_options(title,xlabel,ylabel,ymin,ymax) {
 }
 
 function makePlot(num) {
-	$("#plot_wrapper").append("<div class='well well-small'><div class='plot' id='plot"+num+"' style='height:300px;width:600px;'></div></div>");
-	options = new plot_options(displays[active_config].plots[num].title,displays[active_config].plots[num].xaxislabel,displays[active_config].plots[num].yaxislabel,displays[active_config].plots[num].ymin,displays[active_config].plots[num].ymax);
+	$("#plot_wrapper").append("<div class='well well-small'><div class='plot' id='plot"+num+"' style='height:350px;width:900px;'></div></div>");
+	options = new plot_options(tables.displays[active.displays].definition[num].title,tables.displays[active.displays].definition[num].xaxislabel,tables.displays[active.displays].definition[num].yaxislabel,tables.displays[active.displays].definition[num].ymin,tables.displays[active.displays].definition[num].ymax);
 	plot[num] = $.jqplot("plot"+num,nulldata,options);
 }
 
 function setConfig(num){
-    active_config = num;
+    active.displays = num;
     $(".well .plot").parent('.well').remove();
-    $.each(displays[num].plots, function(k,v){
+    $.each(tables.displays[num].definition, function(k,v){
         makePlot(k);
     });
 }
 
+function onRunStart() {
+    rem_time = Math.ceil(run.end - run.now)/1000;
+    timer = setInterval(updateTimer,1000);
+    toggleDisabled("startNewRun",0);
+    toggleDisabled("stopRun",1);
+    for(var i=0; i<run_inputs.length; i++)
+        toggleDisabled(run_inputs[i],0);
+}
+
+function onRunEnd() {
+    clearInterval(timer);
+    rem_time = 0;
+    updateTimer();
+    toggleDisabled("startNewRun",1);
+    toggleDisabled("stopRun",0);
+    for(var i=0; i<run_inputs.length; i++)
+        toggleDisabled(run_inputs[i],1);
+}
+
 function convertTime(timestamp){
-    return timestamp*1000;
+    return timestamp/1000;
 }
 
 function convertData(data,type){
     var x = data;
-    //return eval(conversions[type].equation);
-    return parseInt(x);
+    return eval(tables.conversions[type].equation);
 }
 
-function updatePlots(){
+function updatePlots() {
     //need to make it so that if signals are removed from signal_list, they are removed from series data
-    $.each(displays[active_config].plots, function(k,v){
+    $.each(tables.displays[active.displays].definition, function(k,v){
         $.each(v["signal_list"], function(i,l){
             if(typeof data_converted[l] != "undefined"){
                 plot[k].series[i].data = data_converted[l];
@@ -123,38 +185,64 @@ function updatePlots(){
         plot[k].axes.xaxis.max = recent_time*1000;
         plot[k].destroy();
         plot[k].replot();
+    });
+}
+
+function makeDisplayValues(){
+    $("#textdisplay_values").html("");
+    $.each(tables.inputs, function(k,v) {
+        if(tables.inputs[k].active > 0) {
+            var str = "<div class='row-fluid force-fluid' style='font-size:1.2em'><div class='span7 force-fluid'>"+tables.inputs[k].name+"</div><div id='signal"+k+"_val' class='span4 text-right force-fluid' style='font-weight:bold'></div><div class='span1 force-fluid'>"+tables.conversions[tables.inputs[k].type].units+"</div></div>";
+            $("#textdisplay_values").append(str);
+        }
     })
+}
+
+function updateDisplayValues(arr) {
+    $.each(tables.inputs, function(k,v){
+        $("#signal"+k+"_val").html(parseFloat(arr[k]).toFixed(2));
+    });
+}
+
+function updateDisplayStates(data) {
+    $.each(data, function(k,v) {
+        $("#control_"+k).html(tables.controls[v].title);
+        console.log(k+" "+v);
+    });
 }
 
 function updatePlot(){
     var plot_num = $("#plotlistingcontainer").find(".active").html();
-    var title = $("#title").val();
-    var xaxislabel = $("#xaxislabel").val();
-    var yaxislabel = $("#yaxislabel").val();
-    var timespan = $("#timespan").val();
-    var ymin = $("#ymin").val();
-    var ymax = $("#ymax").val();
+    var attributes = ["title","xaxislabel","yaxislabel","timespan","ymin","ymax"];
     var signal_list = [];
     $("#signallisting").find(".active").each(function(){
         signal_list.push($(this).html());
     })
     if( plot_num == "+" ){
-        plot_num = countObject(config[active_config].plots)+1;
-        config[active_config].plots[plot_num] = {};
+        plot_num = countObject(config[active.displays].definition)+1;
+        config[active.displays].definition[plot_num] = {};
 
     }
-    config[active_config].plots[plot_num].title = title;
-    config[active_config].plots[plot_num].xaxislabel = xaxislabel;
-    config[active_config].plots[plot_num].yaxislabel = yaxislabel;
-    config[active_config].plots[plot_num].timespan = timespan;
-    config[active_config].plots[plot_num].ymin = ymin;
-    config[active_config].plots[plot_num].ymax = ymax;
-    config[active_config].plots[plot_num].signal_list = signal_list;
-    updateConfig(active_config);
+    for(var i=0; i < attributes.length; i++)
+        config[active.displays].definition[plot_num][attributes[i]] = $("#"+attributes[i]).val();
+    updateConfig(active.displays);
     $("#plot_wrapper").empty();
-    setConfig(active_config);
+    setConfig(active.displays);
     onHideEditPlots();
     onShowEditPlots();
+}
+
+function toggleDisabled(elem_id,force) {
+    if($("#"+elem_id).hasClass("disabled")){
+        if(typeof force === 'undefined' || force == true ){ 
+            $("#"+elem_id).removeClass("disabled");
+        }
+    }
+    else{
+        if(typeof force === 'undefined' || force == false ){
+            $("#"+elem_id).addClass("disabled");
+        }
+    }
 }
 
 // ------------------------------------------------- Getting Configs ----------------------------------------------------- //

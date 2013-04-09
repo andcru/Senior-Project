@@ -48,7 +48,7 @@ serverStart();
 io.sockets.on('connection', function (socket) {
   conn++;
   socket.emit('loadAllInfo', {tables: tables, active: active});
-  io.sockets.emit('running', { run: run, end: et });
+  io.sockets.emit('running', { run: run, end: et, now: (new Date()).getTime() });
   console.log("Total connections: "+conn);
   socket.on('run_request', function (data) {
     if(data.duration > 0)
@@ -195,13 +195,16 @@ function setRun(data) {
     et = tables.starttime.getTime() + data.duration*60*1000;
     tables.endtime = new Date(et);
     rinfo = JSON.parse(JSON.stringify(tables));
-    for(var prop in active)
-        eval("rinfo."+prop+" = tables."+prop+"["+(active[prop]-1)+"];");
+    for(var prop in active) {
+        eval("rinfo."+prop+" = tables."+prop+"["+active[prop]+"];");
+        console.log("rinfo."+prop+" = tables."+prop+"["+active[prop]+"];");
+      }
     for(var prop in rinfo)
       if(prop.search("time") == -1)
         eval("rinfo_s."+prop+" = JSON.stringify(rinfo."+prop+");");
       else
         eval("rinfo_s."+prop+" = rinfo."+prop+";");
+    console.log(rinfo_s);
     db.query("INSERT INTO runs SET ?",rinfo_s, function (err, result) {
       if(err) throw err;
       run = result.insertId;
@@ -213,11 +216,11 @@ function setRun(data) {
         et = 0; 
         io.sockets.emit('running', { run: 0 });
       }, data.duration*60*1000);
-      io.sockets.emit('running', { run: run, end: et });
+      io.sockets.emit('running', { run: run, end: et, now: tables.starttime.getTime() });
     });
   }
   else
-    io.sockets.emit('running', { run: run, end: et });
+    io.sockets.emit('running', { run: run, end: et, now: (new Date()).getTime() });
 }
 
 function killRun() {

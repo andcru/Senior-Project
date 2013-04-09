@@ -3,15 +3,7 @@
 <head>
 	<!--Meta-->
 	<title>daq sp2</title>
-
-	<!--Styles-->
-	<link rel="stylesheet" type="text/css" href="static/css/bootstrap.min.css">
-	<link rel="stylesheet" type="text/css" href="static/css/bootstrap-switch.css">
-	<link rel="stylesheet" type="text/css" href="static/css/bootstrap-select.min.css">	
-	<link rel="stylesheet" type="text/css" href="static/css/bootstrap-overrides.css">	
-<!--<link rel="stylesheet" type="text/css" href="static/css/bootstrap-responsive.min.css">
-	<link rel="stylesheet" type="text/css" href="static/css/bootstrap-responsive-overrides.css">	-->
-	<link rel="stylesheet" type="text/css" href="static/css/font-awesome.min.css">
+	<meta name="viewport" content="width=720, initial-scale=1.0">
 
 	<!--Scripts-->
 	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
@@ -19,11 +11,21 @@
 	<script src="static/js/bootstrap.js"></script>
 	<script src="static/js/bootstrap-switch.js"></script>
 	<script src="static/js/custom-select.js"></script>
-	<script type="text/javascript" src="js/jquery.jqplot.min.js"></script>
-	<script type="text/javascript" src="js/jqplot_plugins/jqplot.dateAxisRenderer.js"></script>
-	<script type="text/javascript" src="js/jqplot_plugins/jqplot.canvasTextRenderer.min.js"></script>
-	<script type="text/javascript" src="js/jqplot_plugins/jqplot.canvasAxisLabelRenderer.min.js"></script>
+	<script type="text/javascript" src="static/js/jquery.jqplot.min.js"></script>
+	<script type="text/javascript" src="static/js/jqplot_plugins/jqplot.dateAxisRenderer.js"></script>
+	<script type="text/javascript" src="static/js/jqplot_plugins/jqplot.canvasTextRenderer.min.js"></script>
+	<script type="text/javascript" src="static/js/jqplot_plugins/jqplot.canvasAxisLabelRenderer.min.js"></script>
 	<script src="display.js"></script>
+
+	<!--Styles-->
+	<link rel="stylesheet" type="text/css" href="static/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="static/css/bootstrap-switch.css">
+	<link rel="stylesheet" type="text/css" href="static/css/bootstrap-select.min.css">	
+	<link rel="stylesheet" type="text/css" href="static/css/bootstrap-overrides.css">	
+	<link rel="stylesheet" type="text/css" href="static/css/bootstrap-responsive.min.css">
+	<link rel="stylesheet" type="text/css" href="static/css/bootstrap-responsive-overrides.css">
+	<link rel="stylesheet" type="text/css" href="static/css/font-awesome.min.css">
+	<link rel="stylesheet" type="text/css" href="css/jquery.jqplot.css">
 
 </head>
 
@@ -42,7 +44,7 @@
 
 				<div class="nav-collapse collapse">
 					<ul class="nav pull-right">
-						<li><a href="display">live</a></li>
+						<li class="active"><a href="display">live</a></li>
 						<li><a href="history">history</a></li>
 						<li><a href="settings">settings</a></li>
 						<li><a href="help" >help</a></li>
@@ -57,14 +59,14 @@
         <div class="navbar">
         	<div class="navbar-inner">
 				<div class="navbar-form pull-right">
-					<input name="sr" id="sr" type="number" class="span2" placeholder="Sampling Rate (Hz)">
+					<input name="name" id="name" type="text" class="span2" placeholder="Name of Run" style="width:250px">
+					<input name="rate" id="rate" type="number" class="span2" placeholder="Sampling Rate (Hz)">
 				  	<input name="duration" id="duration" type="number" class="span2" placeholder="Duration (min)">
 				  	<div class="btn-group">
-				  		<button id="startNewRun" class="btn"><i class="icon-step-forward"></i> New Run</button>
-				  		<button id="continueRun" class="btn"><i class="icon-play"></i> Continue</button>
+				  		<button id="startNewRun" class="btn run_control"><i class="icon-step-forward"></i> New Run</button>
 				  	</div>
 				  	<div class="btn-group">
-				  		<button id="stopRun" class="btn disabled"><i class="icon-pause"></i> Stop/Pause</button>
+				  		<button id="stopRun" class="btn run_control disabled"><i class="icon-pause"></i> Stop</button>
 				  	</div>
 				</div>
         	</div>
@@ -77,15 +79,22 @@
 				<button id="textdisplay_toggle" class="btn btn-block">Click to Toggle Status Display</button>
 			</div>
 			<div id="textdisplay" class="row-fluid" style="margin-top:15px">
-				<div class="span6" id="textdisplay_timing">
+				<div class="span4" id="textdisplay_timing">
 					<h1>Time Remaining</h1>
-					<h1 id="time_remain"s class="text-right">0:00:00</h1>
+					<h1 id="time_remain" class="text-center">0:00:00</h1>
 				</div>
-				<div class="span6" id="textdisplay_values"></div>
+				<div class="span4" id="textdisplay_values"></div>
+				<div class="span1"></div>
+				<div class="span3" id="textdisplay_states">
+					<h3 class="text-right">Control States</h3>
+					<div><b>Previous: </b><span style="display:inline" id="control_prev"></span></div>
+					<div><b>Current: </b><span style="display:inline" id="control_state"></span></div>
+					<div><b>Next: </b><span style="display:inline" id="control_next"></span></div>
+				</div>
 			</div>
 		</div>
 	</div>
 
-	<div class="container" id="plot_wrapper"></div>
+	<div class="container-fluid" id="plot_wrapper"></div>
 
 </body>

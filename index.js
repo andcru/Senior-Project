@@ -76,16 +76,18 @@ function fillAllInfo(){
 
 	console.log('Filling Outputs');
 	$.each(tables.outputs, function(k,v){
-		$('#output_'+v.id+'_name');
+		$('#output_'+v.id+'_name').val(v.name);
 		$('#output_'+v.id+'_active').bootstrapSwitch('setState',v.active);
 		active_outputs.push(v.active);
 		//controls box stuff
 	})   
 
 	console.log('Filling Controls');
+	var configs = [];
 	$.each(tables.controls, function(k,v){
-		$('#control_config_select').append($('<li />').addClass('menuitem').attr('title',v.id).text(v.title));
+		configs.push($('<option />').attr('title',v.id).text(v.title));
 	})
+$('#control_config_select').append(configs);
 	$.each(tables.controls[active.controls].definition, function(k,v){
 		addControlRow(k, v, active_outputs, active_inputs);
 	})
