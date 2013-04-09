@@ -20,12 +20,9 @@ exec("gpio unexportall");
 
 app.listen(8100);
 
-
-
 // Variable List
 var conn   = 0
   , run    = 0
-  , abv    = 0 // Shows whether previous reading was above or below the setpoint
   , rend   = null
   , ctlend = null
   , buff   = []
@@ -64,7 +61,8 @@ io.sockets.on('connection', function (socket) {
     db_request(data);
   });
   socket.on('db_update', function (data) {
-    socket.emit('db_update', db_update(data));
+    console.log(data);
+    db_update(data);
   })
   socket.on('disconnect', function () {
     conn--;
@@ -117,10 +115,29 @@ function db_request(data) {
 }
 
 function db_update(data) {
-  db.query('UPDATE ' + sql.escapeId(data.table) + ' SET ' + sql.escape(data.pairs) + ' WHERE ' + sql.escape(data.match), function (err, rows, fields) {
-    if(err) throw err;
-    else return "1";
-  });
+  var count = 0;
+  for(var op in data) {
+    var qry = "";
+    switch (data[op].operation) { 
+      case "update":
+        qry = "UPDATE " + sql.escapeId(data[op].table) + " SET " + sql.escape(data[op].params) + " WHERE id = " + sql.escape(data[op].index);
+        break;
+      case "insert":
+        qry = "INSERT INTO " + sql.escapeId(data[op].table) + " SET " + sql.escape(data[op].params);
+        break;
+      case "delete":
+        qry = "DELETE FROM " + sql.escapeId(data[op].table) + " WHERE id = " + sql.escape(data[op].index);
+        break;
+    }
+    console.log("Query: "+qry);
+    db.query(qry, function (err, rows, fields) {
+      if(err) throw err;
+      count++;
+      if(count === data.length) {
+        loadTable();
+      }
+    });
+  }
 }
 
 function db_insert(data) {
@@ -139,10 +156,16 @@ function db_insert(data) {
 // <--------------------- Andy's Section ----------------------->
 
 function serverStart() {
-  for (var i = 0 ; i < run_tables.length ; i++)
-    db_pullTable(i);
+  loadTable();
   openGPIO();
   sampler();
+}
+
+function loadTable() {
+  tables = {};
+  console.log('Load Table');
+  for (var i = 0 ; i < run_tables.length ; i++)
+    db_pullTable(i);
 }
 
 // Retrieves run info from the various tables as defined in "run_tables"
@@ -157,6 +180,8 @@ function db_pullTable(count) {
       buff[rows[row].id] = rows[row];
     eval('tables.'+run_tables[count]+' = buff;');
     console.log('Table "'+run_tables[count]+'" loaded!');
+    if(Object.keys(tables).length == run_tables.length && conn > 0)
+      io.sockets.emit('loadAllInfo', {tables: tables, active: active});
   });
 }
 

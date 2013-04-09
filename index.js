@@ -6,17 +6,22 @@ var tables, active, active_outputs = [], active_inputs = [];
 $(document).ready(function(){
 	$("#loadingscreen").modal({backdrop: true, keyboard: false, show: false});
 
-	$("[id^='savechanges']").on('click', function(){
+	$("button[id^='savechanges']").on('click', function(){
 		var sc = $(this).attr('id').split('_');
-		loadWrap('saving '+sc[1], updateTable, sc[1]);
+		loadWrap('saving '+sc[1], 1, updateTable, sc[1]);
 	});
+	$("button[id$='delete']").on('click', function(){
+		var sc = $(this).attr('id').split('_');
+		console.log('hi');
+		$('#row_'+sc[0]+'_'+sc[1]).remove();
+	})
 });
 
 socket.on('loadAllInfo', function(data) {
 	console.log('Tables Received');
 	tables = data.tables;
 	active = data.active;
-	loadWrap(fillAllInfo);
+	loadWrap('Loading Info...', fillAllInfo);
 })
 
 socket.on('db_return', function (data) {
@@ -26,54 +31,64 @@ socket.on('db_return', function (data) {
     //eval('console.log('+data.table+')');
 });
 
-socket.on('reading', function (data) {
-	//console.log(data);
-});
-
-socket.on('running', function (data) {
-  	//addText("Running: "+data.number+", End: "+data.end);
-	//showStatus(data.number);
-});	
-
-function loadWrap(loadtext, fun, a){
-	if(typeof arguments[0] != "string"){
+function loadWrap(loadtext, wait, fun, a){
+	if(typeof loadtext != "string" && typeof loadtext != "number"){
 		fun = loadtext;
+		a = wait;
 		loadtext = 'Loading...';
+		wait = 0;
 	}
+	if(typeof wait != "number"){
+		a = fun;
+		fun = wait;
+		wait = 0;
+	}
+	console.log([loadtext, wait, fun, a]);
 	$("#loadtext").html(loadtext);
 	$("#loadingscreen").modal('show');
 	fun(a);
-	$("#loadingscreen").modal('hide');
+	if(!wait)
+		$("#loadingscreen").modal('hide');
 }
 
 function fillAllInfo(){
+	$('#list-controls').empty();
+	$('#list-conversions').empty();
+	$('select[id$="type"]').empty();
+	active_inputs = [];
+	active_outputs = [];
+
 	console.log('Filling Converions');
+	var convs = [];
 	$.each(tables.conversions, function(k,v){
-		$('[id$="type"]').append($('<option />').val(v.id).text(v.name));
+		convs.push($('<option />').val(v.id).text(v.name));
 		addConversionRow(v);
 	});
+	$('select[id$="type"]').append(convs);
+
 	console.log('Filling Inputs');
 	$.each(tables.inputs, function(k,v){
 		$('#input_'+v.id+'_name').val(v.name);
-		$('#input_'+v.id+'_active').parent('div').bootstrapSwitch('setState',v.active);
+		$('#input_'+v.id+'_active').bootstrapSwitch('setState',v.active);
 		$('#input_'+v.id+'_type').val(v.type);
 		active_inputs.push(v.active);
 	});
+
 	console.log('Filling Outputs');
 	$.each(tables.outputs, function(k,v){
-		$('#output_'+v.id+'_name').val(v.name);
-		$('#output_'+v.id+'_active').parent('div').bootstrapSwitch('setState',v.active);
+		$('#output_'+v.id+'_name');
+		$('#output_'+v.id+'_active').bootstrapSwitch('setState',v.active);
 		active_outputs.push(v.active);
 		//controls box stuff
 	})   
+
 	console.log('Filling Controls');
 	$.each(tables.controls, function(k,v){
-		$('#control_config_select').append($('<option />').val(v.id).text(v.title));
+		$('#control_config_select').append($('<li />').addClass('menuitem').attr('title',v.id).text(v.title));
 	})
 	$.each(tables.controls[active.controls].definition, function(k,v){
 		addControlRow(k, v, active_outputs, active_inputs);
 	})
-	$('.selectpicker').selectpicker('refresh');
 	$('.tooltipped').tooltip();
 }
 
@@ -91,13 +106,13 @@ function addControlRow(id, def){
 			operator:   typeof(def.operator)   === "undefined" ? '<': '>'
 		};
 	// if script should check to make sure that control pins are active (assumes control configuration linked to output configuration);
-	var s = $.sprintf('<div class="row-fluid"><div class="span1 text-center">%s</div><div class="span2"><input type="text" value="%s"></div><div class="span3 row-fluid">', id, def.name);
+	var s = $.sprintf('<div class="row-fluid" id="row_control_%s"><div class="span1 text-center">%s</div><div class="span2"><input type="text" value="%s"></div><div class="span3 row-fluid">', id, id, def.name);
 	for(var i = 1; i<=8; i++)
 		s += $.sprintf('<div class="span_8_1 tooltipped" data-toggle="tooltip" data-original-title="%s"><button class="btn btn-switch %s" data-toggle="button" %s>%s</button></div>',tables.outputs[i].name, def.values[i] && active_outputs[i-1] ? 'active' : '', active_outputs[i-1] ? '' : 'disabled', i)
 	s += $.sprintf('</div><div class="span3"><select class="selectpicker show-tick dropup span5" id="control_%s_read_pin">',id);
 	s += $.sprintf('<option value="0" %s>None</option>', def.read_pin == 0 ? 'selected' : '');
 	for(var i = 1; i<=16; i++)
-		s += $.sprintf('<option %s value="%s" %s title="input %s" data-subtext="(input %s)">%s</option>', active_inputs[i-1] ? '' : 'disabled', i, i==def.read_pin ? 'selected' : '',i, i, tables.inputs[i].name)	;
+		s += $.sprintf('<option %s value="%s" %s>(%s) %s</option>', active_inputs[i-1] ? '' : 'disabled', i, i==def.read_pin ? 'selected' : '', i, tables.inputs[i].name)	;
 	s += $.sprintf('</select><select %s class="selectpicker show-tick dropup span3" id="control_%s_operator"><option %s value="<"><</option><option %s value=">">></option></select> <input %s class="span4" type="text" id="control_%s_read_value" value="%s"></div><div class="span1"><input type="number" id="control_%s_min" value="%s"></div><div class="span1"><input type="number" id="control_%s_max" value="%s"></div>', def.read_pin ? '' : 'disabled', id, def.operator == '<' ? 'selected' : '', def.operator == '>' ? 'selected' : '', def.read_pin ? '' : 'disabled', id, def.read_value, id, def.min, id, def.max);
 	s += $.sprintf('<button class="btn span1 btn-danger" id="control_%s_delete">delete</button></div>',id);
 	$('#list-controls').append(s);
@@ -105,7 +120,7 @@ function addControlRow(id, def){
 
 function addConversionRow(conv){
 	//conv ={id,name,equation,units}
-	var s = $.sprintf('<div class="row-fluid text-center"><div class="span2"><input id="conversion_%s_name" type="text" value="%s"></div><div class="span8"><input id="conversion_%s_equation" type="text" value="%s"></div><div class="span1"><input id="conversion_%s_units" type="text" value="%s"></div><div class="span1"><button class="btn btn-block btn-danger" id="conversion_%s_delete">delete</button></div></div>',conv.id,conv.name,conv.id,conv.equation,conv.id,conv.units,conv.id);
+	var s = $.sprintf('<div class="row-fluid text-center" id="row_conversion_%s"><div class="span2"><input id="conversion_%s_name" type="text" value="%s"></div><div class="span8"><input id="conversion_%s_equation" type="text" value="%s"></div><div class="span1"><input id="conversion_%s_units" type="text" value="%s"></div><div class="span1"><button class="btn btn-block btn-danger" id="conversion_%s_delete">delete</button></div></div>',conv.id,conv.id,conv.name,conv.id,conv.equation,conv.id,conv.units,conv.id);
 	$('#list-conversions').append(s);
 }
 
@@ -136,8 +151,15 @@ function updateTable(table){
 				temp_table[iande[1]][iande[2]] = $(this).val();
 		}
 	})
-	if(table != 'controls')
+	if(table != 'controls') {
 		console.log({loc: temp_table, ref: tables[table], res: tableCompare(temp_table, tables[table], table)});
+		if (tableCompare(temp_table, tables[table], table).length){
+			socket.emit('db_update', tableCompare(temp_table, tables[table], table));	
+			console.log('update me!!!');
+		}
+		else
+			$('#loadingscreen').modal('hide');
+	}
 	else
 		console.log(tableCompare(temp_table, tables.controls[$('#controls_config_select').val()].definition, table));
 }
@@ -151,6 +173,10 @@ function tableCompare(loc, ref, table_name){
 		}
 		else if(JSON.stringify(loc[p]) != JSON.stringify(ref[p]))
 			result.push({operation: 'update', table: table_name, index: parseInt(loc[p].id), params: loc[p]});
+	}
+	for (var p in ref){
+		if(typeof(loc[p]) === 'undefined')
+			result.push({operation: 'delete', table: table_name, index: parseInt(ref[p].id)});
 	}
 	return result;
 }
