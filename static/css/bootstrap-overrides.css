@@ -7,10 +7,6 @@ body {
 	margin:auto auto;
 }
 
-select{
-	width:100%;
-}
-
 .row-fluid [class*="span_8_"] {
   display: block;
   width: 100%;
@@ -89,4 +85,7 @@ select{
   background-image: linear-gradient(to bottom,#08c,#0077b3);
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff0088cc',endColorstr='#ff0077b3',GradientType=0);
+}
+.no_hover:hover {
+  text-decoration:none;
 }

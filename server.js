@@ -58,6 +58,9 @@ io.sockets.on('connection', function (socket) {
     else
       killRun();
   });
+  socket.on('active_change', function (data) {
+    active = data;
+  });
   socket.on('db_request', function (data) {
     console.log(data);
     db_request(data);
@@ -93,6 +96,9 @@ function handler (req, res) {
       break;
     case 'html':
       var mtype = 'text/html';
+      break;
+    case 'csv':
+      var mtype = 'application/octet-stream';
       break;
     default:
       var mtype = 'text/plain';
@@ -278,7 +284,7 @@ function control(reading) {
   if(next > 0)
     newState();
   else
-    console.log("Time in state: "+td);
+    console.log("Time in states: "+td);
 }
 
 function newState() {

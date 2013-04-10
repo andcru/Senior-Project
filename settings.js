@@ -11,13 +11,40 @@ $(document).ready(function(){
 		loadWrap('saving '+sc[1], 1, updateTable, sc[1]);
 	});
 	$("#conversions-container").on('click', "button[id$='delete']", function(){
-		var sc = $(this).attr('id').split('_');
-		console.log('hi');
-		$('#row_'+sc[0]+'_'+sc[1]).after('<p>restore?</p>').children().hide();
+		var sc = $(this).attr('id').split('_')[1];
+		if($(this).hasClass('btn-success')){
+			$('#row_conversion_'+sc).removeClass('restorable-row').find(".restorable").removeClass('restorable').attr('disabled',false);
+			$(this).removeClass('btn-success').addClass('btn-danger').text('delete');
+		}
+		else{
+			$('#row_conversion_'+sc).addClass('restorable-row').find("input").attr('disabled',true).addClass('restorable');
+			$(this).removeClass('btn-danger').addClass('btn-success').text('restore');
+		}
 	});
+	$("#controls-container").on('click', "button[id$='delete']", function(){
+		var sc = $(this).attr('id').split('_')[1];
+		if($(this).hasClass('btn-success')){
+			$('#row_control_'+sc).removeClass('restorable-row').find('.restorable').attr('disabled',false).removeClass('restorable');
+			$(this).removeClass('btn-success').addClass('btn-danger').text('delete');
+		}
+		else{
+			$('#row_control_'+sc).addClass('restorable-row').find("input:not(:disabled), select:not(:disabled), button:not([id$='delete']):not(:disabled)").addClass('restorable').attr('disabled','disabled');
+			$(this).removeClass('btn-danger').addClass('btn-success').text('restore');
+		}		
+	})
 	$("#new_conversion").on('click', function(){
 		addConversionRow();
 	});
+	$("#new_controlstate").on('click', function(){
+		addControlRow();
+	});
+	$("#controls-container").on('change','[id$="read_pin"]', function(){
+		if($(this).val() == '0')
+			$(this).siblings().attr('disabled', true);
+		else
+			$(this).siblings().attr('disabled', false);
+
+	})
 });
 
 socket.on('loadAllInfo', function(data) {
@@ -101,7 +128,8 @@ function fillAllInfo(){
 function addControlRow(id, def){
 	// id, definition[id], active outputs
 	// definition[id] -> {name, min, max, values, read_pin, read_value, operator}
-	id = id || 1;
+	id = id || nextControlRow();
+	if(typeof(def)!="object"){def = {};}
 	def = {
 			name:       typeof(def.name)       === "undefined" 										 ? ''                 : def.name,
 			min:        typeof(def.min)        === "undefined" 										 ? 0                  : def.min,
@@ -112,16 +140,24 @@ function addControlRow(id, def){
 			operator:   typeof(def.operator)   === "undefined" 										 ? '<'                : '>'
 		};
 	// if script should check to make sure that control pins are active (assumes control configuration linked to output configuration);
-	var s = $.sprintf('<div class="row-fluid" id="row_control_%s"><div class="span1 text-center">%s</div><div class="span2"><input id="control_%s_name" class="span12" type="text" value="%s" id="control_%s_name"></div><div class="span3 row-fluid">',id, id, id, def.name, id);
+	var s = $.sprintf('<div class="row-fluid" id="row_control_%s"><div class="span2"><input id="control_%s_name" class="span12" type="text" value="%s" id="control_%s_name"></div><div class="span3 row-fluid">',	 id, id, def.name, id);
 	for(var i = 1; i<=8; i++)
-		s += $.sprintf('<div class="span_8_1 tooltipped" data-toggle="tooltip" data-original-title="%s"><button id="control_%s_pin_%s" class="btn btn-switch %s" data-toggle="button" %s>%s</button></div>',tables.outputs[i].name, id, i, def.values[i-1] && active_outputs[i-1] ? 'active' : '', active_outputs[i-1] ? '' : 'disabled', i)
-	s += $.sprintf('</div><div class="span3"><select class="selectpicker show-tick dropup span5" id="control_%s_read_pin">',id);
+		s += $.sprintf('<div class="span_8_1 tooltipped" data-toggle="tooltip" data-original-title="%s"><button id="control_%s_pin_%s" class="btn btn-switch %s" data-toggle="button" %s>%s</button></div>',tables.outputs[i].name, id, i, def.values[i-1] && active_outputs[i-1] ? 'active' : '', active_outputs[i-1] ? '' : 'disabled="disabled"', i)
+	s += $.sprintf('</div><div class="span4"><select class="show-tick dropup span7" id="control_%s_read_pin">',id);
 	s += $.sprintf('<option value="0" %s>None</option>', def.read_pin == 0 ? 'selected' : '');
 	for(var i = 1; i<=16; i++)
 		s += $.sprintf('<option %s value="%s" %s>(%s) %s</option>', active_inputs[i-1] ? '' : 'disabled', i, i==def.read_pin ? 'selected' : '', i, tables.inputs[i].name)	;
-	s += $.sprintf('</select><select %s class="selectpicker show-tick dropup span3" id="control_%s_operator"><option %s value="<"><</option><option %s value=">">></option></select> <input %s class="span4" type="text" id="control_%s_read_value" value="%s"></div><div class="span1"><input class="span12" type="number" min="0" step="any" id="control_%s_min" value="%s"></div><div class="span1"><input class="span12" type="number" min="0" step="any" id="control_%s_max" value="%s"></div>', def.read_pin ? '' : 'disabled', id, def.operator == '<' ? 'selected' : '', def.operator == '>' ? 'selected' : '', def.read_pin ? '' : 'disabled', id, def.read_value, id, def.min, id, def.max);
+	s += $.sprintf('</select><select %s class="show-tick dropup span2" id="control_%s_operator"><option %s value="<"><</option><option %s value=">">></option></select> <input %s class="span3" type="number" min="0" max="1023" id="control_%s_read_value" value="%s"></div><div class="span1"><input class="span12" type="number" min="0" step="any" id="control_%s_min" value="%s"></div><div class="span1"><input class="span12" type="number" min="0" step="any" id="control_%s_max" value="%s"></div>', def.read_pin ? '' : 'disabled="disabled"', id, def.operator == '<' ? 'selected' : '', def.operator == '>' ? 'selected' : '', def.read_pin ? '' : 'disabled="disabled"', id, def.read_value, id, def.min, id, def.max);
 	s += $.sprintf('<button class="btn span1 btn-danger" id="control_%s_delete">delete</button></div>',id);
 	$('#list-controls').append(s);
+}
+
+function nextControlRow(){
+	var max = 0;
+	$('[id^="row_control"]').each(function(){
+		max = Math.max(max, parseInt($(this).attr('id').split('_')[2]));
+	})
+	return max+1;
 }
 
 function addConversionRow(conv){
@@ -138,16 +174,16 @@ function addConversionRow(conv){
 }
 
 function nextConvid(){
-	var max = 0
-	$('[id^="conversion_"]').each(function(){
-		max = Math.max(max, parseInt($(this).attr('id').split('_')[1]));
+	var max = 0;
+	$('[id^="row_conversion"]').each(function(){
+		max = Math.max(max, parseInt($(this).attr('id').split('_')[2]));
 	})
 	return max+1;
 }
 
 function updateTable(table){
 	var temp_table = {};
-	$.each($('[id^='+table.substring(0,table.length-1)+'_]'), function(k,v){
+	$.each($('[id^="'+table.substring(0,table.length-1)+'_"]'), function(k,v){
 		var iande = $(this).attr('id').split('_');
 		if(typeof temp_table[iande[1]] === 'undefined')
 			temp_table[iande[1]] = {};
@@ -176,18 +212,29 @@ function updateTable(table){
 			default:
 				temp_table[iande[1]][iande[2]] = $(this).val();
 		}
+	});
+	$('[id^="row_'+table.substring(0,table.length-1)+'_"]').filter(".restorable-row").each(function(){
+		delete temp_table[parseInt($(this).attr('id').split('_')[2])];
 	})
-	if(table != 'controls')
+	if(table != 'controls'){
 		var res = tableCompare(temp_table, tables[table], table);
-	else
-		var res = tableCompare(temp_table, tables.controls[$('#controlscheme_select').val()].definition, table);
-
-	if(res.length){
-			//socket.emit('db_update', res);	
+		if(res.length){
+			socket.emit('db_update', res);	
 			console.log(res);
 		}
-	else
-		$('#loadingscreen').modal('hide');
+		else
+			$('#loadingscreen').modal('hide');
+	}
+	else{
+		var res = tableCompare(temp_table, tables.controls[$('#controlscheme_select').val()].definition, table);
+		if(res.length){
+			res = [{operation: 'update', table: 'controls', index: parseInt($('#controlscheme_select').val()), params: {definition: JSON.stringify(temp_table)}}];
+			socket.emit('db_update', res);	
+			console.log(res);
+		}
+		else
+			$('#loadingscreen').modal('hide');
+	}
 }
 
 function tableCompare(loc, ref, table_name){

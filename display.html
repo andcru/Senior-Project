@@ -63,7 +63,7 @@
 				  		<button id="startNewRun" class="btn run_control"><i class="icon-step-forward"></i> New Run</button>
 				  	</div>
 				  	<div class="btn-group">
-				  		<button id="stopRun" class="btn run_control disabled"><i class="icon-pause"></i> Stop</button>
+				  		<button id="stopRun" class="btn run_control disabled"><i class="icon-stop"></i> Stop</button>
 				  	</div>
 				</div>
         	</div>
@@ -72,13 +72,10 @@
 
 	<div class="container-fluid" id="textdisplay_wrapper">
 		<div class="well well-small">
-			<div class="row-fluid">
-				<button id="textdisplay_toggle" class="btn btn-block">Click to Toggle Status Display</button>
-			</div>
 			<div id="textdisplay" class="row-fluid" style="margin-top:15px">
 				<div class="span4" id="textdisplay_timing">
 					<h1>Time Remaining</h1>
-					<h1 id="time_remain" class="text-center">- No Active Run -</h1>
+					<h2 id="time_remain" class="text-center">- No Active Run -</h2>
 				</div>
 				<div class="span4" id="textdisplay_values"></div>
 				<div class="span1"></div>
@@ -94,4 +91,88 @@
 
 	<div class="container-fluid" id="plot_wrapper"></div>
 
+	<div class="container-fluid">
+        <div class="well well-small">
+        	<div class="row-fluid force-fluid">
+        		<div class="span2"><h4 style="display:inline">Plot Configuration</h4></div>
+        		<div class="span4"><select id="display_scheme"></select></div>
+        		<div class="span4">
+        			<button class="btn btn-danger" id="delete_config"><i class="icon-remove-circle icon-white"></i> Delete configuration</button>
+        			<button class="btn btn-primary" id="new_config"><i class="icon-ok-circle icon-white"></i> New Configuration</button>
+	        	</div>
+	        	<div class="span2">
+	        		<a class='no_hover' id="add_plot_link" href='#plot_editor' data-toggle='modal'>
+	        			<button class="btn btn-primary" id="new_plot"><i class="icon-ok-circle icon-white"></i> Add Plot</button>
+	        		</a>
+	        	</div>
+        	</div>
+        </div>
+    </div>
+
+	<div id="plot_editor" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	    <div class="modal-header">
+	        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+	        <h3>Edit Plot <span id="editplotnum"></span></h3>
+	    </div>
+	    <div class="modal-body">
+	    	<div class="">	
+		        <div id="plotoptionscontainer" style="min-height:120px">
+					<form class="form-horizontal">
+					    <div class="control-group">
+					      	<label class="control-label" for="title">Title</label>
+					    	<div class="controls">
+					      		<input type="text" id="title" placeholder="(ex) Temperature vs. Time">
+					    	</div>
+					  	</div>
+					    <div class="control-group">
+					      	<label class="control-label" for="xaxislabel">xLabel</label>
+					    	<div class="controls">
+					      		<input type="text" id="xaxislabel" placeholder="(ex) Time (45 seconds)">
+					    	</div>
+					  	</div>
+					    <div class="control-group">
+					      	<label class="control-label" for="yaxislabel">yLabel</label>
+					    	<div class="controls">
+					      		<input type="text" id="yaxislabel" placeholder="(ex) Temperature">
+					    	</div>
+					  	</div>
+					    <div class="control-group">
+					      	<label class="control-label" for="ymin">yMin</label>
+					    	<div class="controls">
+					      		<input type="number" id="ymin" placeholder="(ex) 0">
+					    	</div>
+					  	</div>
+					    <div class="control-group">
+					      	<label class="control-label" for="ymax">yMax</label>
+					    	<div class="controls">
+					      		<input type="number" id="ymax" placeholder="(ex) 100">
+					    	</div>
+					  	</div>	
+					  	<div class="control-group">
+					      	<label class="control-label" for="timespan">timespan (s)</label>
+					    	<div class="controls">
+					      		<input type="number" id="timespan" placeholder="(ex) 45">
+					    	</div>
+					  	</div>	
+					  	<div class="control-group">
+					      	<label class="control-label" for="signallisting">Signals</label>
+					    	<div class="controls">
+					  			<select id="signalselect" multiple="multiple"></select>					  					 
+					    	</div>
+					  	</div>		
+					</form>
+		        </div>
+	    	</div>
+	    </div>
+	    <div class="modal-footer">
+	        <button class="btn btn-danger" id="delete_plot"><i class="icon-remove-circle icon-white"></i> Delete Plot</button>
+	        <button class="btn btn-primary" id="update_plot"><i class="icon-ok-circle icon-white"></i> Save changes</button>
+	    </div>
+	</div>
+
+	<div id="config_editor" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+		<div class="modal-header">
+	        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+	        <h3>New Configuration</h3>
+	    </div>
 </body>

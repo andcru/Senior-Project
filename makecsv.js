@@ -9,6 +9,7 @@ var csv = require('ya-csv')
 
 var 	runvars = {}
 	,	rundata = {}
+	,	history = {}
 	,	csvdata = []
 	,	min_id
 	,	min_time
@@ -57,7 +58,12 @@ function loadData() {
 	    	if(err) throw err;
 	    	min_id = rows[0].mr;
 	    	min_time = rows[0].mt;
-	    	convertData();
+	    	db.query('SELECT * FROM state_history WHERE run = ' + sql.escape(run), function (err,rows,fields) {
+		    	if(err) throw err;
+		    	history = rows;
+		    	console.log(history);		    	
+		    	convertData();
+		    });
 	    });
 	});
 }
@@ -88,7 +94,7 @@ function makeCSV() {
 	for(var i=0; i<csvdata.length; i++) {
 		writer.writeRecord(csvdata[i]);
 	}
-	writer.writeStream.end();
+	//writer.writeStream.end();
 	writer.writeStream.on('close', function() {
 		console.log("1");
 		process.exit();
