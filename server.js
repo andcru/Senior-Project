@@ -60,6 +60,7 @@ io.sockets.on('connection', function (socket) {
   });
   socket.on('active_change', function (data) {
     active = data;
+    socket.emit('loadAllInfo', {tables: tables, active: active});
   });
   socket.on('db_request', function (data) {
     console.log(data);
@@ -138,9 +139,11 @@ function db_update(data) {
         break;
     }
     console.log("Query: "+qry);
-    db.query(qry, function (err, rows, fields) {
+    db.query(qry, function (err, result) {
       if(err) throw err;
       count++;
+      if(data[op].operation == "insert" && data[op].table == "displays")
+        active.displays = result.insertId;
       if(count === data.length) {
         loadTable();
       }
@@ -199,9 +202,9 @@ function setRun(data) {
     var rinfo_s = {};
     tables.title = data.name;
     del  = 1000/data.rate;
-    tables.starttime = new Date();
-    et = tables.starttime.getTime() + data.duration*60*1000;
-    tables.endtime = new Date(et);
+    var starttime = new Date();
+    et = starttime.getTime() + data.duration*60*1000;
+    var endtime = new Date(et);
     rinfo = JSON.parse(JSON.stringify(tables));
     for(var prop in active) {
         eval("rinfo."+prop+" = tables."+prop+"["+active[prop]+"];");
@@ -216,13 +219,13 @@ function setRun(data) {
     db.query("INSERT INTO runs SET ?",rinfo_s, function (err, result) {
       if(err) throw err;
       run = result.insertId;
-      rcont = {state: 0, begin: tables.starttime.getTime()};
+      rcont = {state: 0, begin: starttime.getTime()};
       newState();
       console.log("Starting run "+run);
       rend = setTimeout(function() {
         killRun();
       }, data.duration*60*1000);
-      io.sockets.emit('running', { run: run, end: et, now: tables.starttime.getTime(), del: del });
+      io.sockets.emit('running', { run: run, end: et, now: starttime.getTime(), del: del });
     });
   }
   else

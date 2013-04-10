@@ -133,7 +133,7 @@ function addControlRow(id, def){
 	def = {
 			name:       typeof(def.name)       === "undefined" 										 ? ''                 : def.name,
 			min:        typeof(def.min)        === "undefined" 										 ? 0                  : def.min,
-			max:        typeof(def.max)        === "undefined" 										 ? 0                  : def.max,
+			max:        typeof(def.max)        === "undefined" 										 ? 1                  : def.max,
 			values:     typeof(def.values)     === "undefined" 										 ? [0,0,0,0,0,0,0,0] : def.values, 
 			read_pin:   typeof(def.read_pin)   === "undefined" || active_inputs[def.read_pin-1] != 1 ? 0                  : def.read_pin,
 			read_value: typeof(def.read_value) === "undefined" 										 ? 0                  : def.read_value,
@@ -215,7 +215,7 @@ function updateTable(table){
 	});
 	$('[id^="row_'+table.substring(0,table.length-1)+'_"]').filter(".restorable-row").each(function(){
 		delete temp_table[parseInt($(this).attr('id').split('_')[2])];
-	})
+	});
 	if(table != 'controls'){
 		var res = tableCompare(temp_table, tables[table], table);
 		if(res.length){
@@ -226,6 +226,14 @@ function updateTable(table){
 			$('#loadingscreen').modal('hide');
 	}
 	else{
+		// If you changed number of rows
+		if(Object.keys(temp_table).toString() != Object.keys(tables.controls[$('#controlscheme_select').val()].definition).toString()) {
+			var j=1, temp_table2 = {};
+			for(var k in temp_table)
+				if(temp_table.hasOwnProperty(k))
+					temp_table2[j++] = temp_table[k];
+			temp_table = temp_table2;
+		}
 		var res = tableCompare(temp_table, tables.controls[$('#controlscheme_select').val()].definition, table);
 		if(res.length){
 			res = [{operation: 'update', table: 'controls', index: parseInt($('#controlscheme_select').val()), params: {definition: JSON.stringify(temp_table)}}];

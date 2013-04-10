@@ -14,8 +14,10 @@ var   recent_time
     , def_samp_rate = 1000
     , no_run_text
     , max_disp_config = 0
+    , pause = 0
     , nulldata = [[null],[null],[null],[null],[null],[null],[null],[null]]
-    , run_inputs = ["name","rate","duration"];
+    , run_inputs = ["name","rate","duration"]
+    , disp_vals = ["title","xaxislabel","yaxislabel","ymin","ymax","timespan"];
 
 socket.on('reading', function(data) {
     getData(data);
@@ -45,14 +47,19 @@ socket.on('loadAllInfo', function(data) {
     loadStates();
     setConfig(active.displays);
     makeDisplayValues();
+    $('#plot_editor').modal('hide');
+    pause = 0;
 });
 
 $(document).ready(function(){
     $(".run_control").click(doRun);
     no_run_text = $("#time_remain").html();
     $("#update_plot").click(updatePlot);
+    $("#delete_plot").click(deletePlot);
     $("#new_config").click(newConfig);
+    $("#delete_config").click(deleteConfig);
     $("#new_plot").click(newPlot);
+    $("#display_scheme").change(switchScheme);
 });
 
 function doRun() {
@@ -71,8 +78,24 @@ function doRun() {
     }
 }
 
-function newPlot() {
+function deleteConfig() {
+    var id = $("#display_scheme").val();
+    res = [{operation: "delete", table: "displays", index: id}];
+    active.displays = 1;
+    socket.emit('active_change', active);
+    socket.emit('db_update', res);
+    pause = 1;
+}
 
+function switchScheme() {
+    active.displays = parseInt($(this).val());
+    socket.emit('active_change', active);
+}
+
+function newPlot() {
+    $("form").find('input').each(function(k,v) {
+        $(v).val("");
+    });
 }
 
 function newConfig() {
@@ -82,15 +105,12 @@ function newConfig() {
         var def = {};
         outs[0] = {operation: "insert", table: "displays"};
         outs[0].params = {name: name, definition: JSON.stringify(def) };
-        console.log(outs);
-        active.displays = max_disp_conf + 1;
         socket.emit('db_update',outs);
-        socket.emit('active_change', active);
-        window.location.reload();
     }
 }
 
 function loadStates() {
+    $('option', $("#display_scheme")).remove();
     for(var k in tables.displays)
         $("#display_scheme").append($('<option/>', {value: tables.displays[k].id, text: tables.displays[k].name}));
     max_disp_conf = tables.displays[k].id;
@@ -108,7 +128,15 @@ function updatePlot() {
         buff.signal_list.push($(v).val());
     });
     tables.displays[active.displays].definition[num] = buff;
-    updateDisplayRecord();
+    updateTable("displays","update");
+}
+
+function deletePlot() {
+    if(!$(this).hasClass('disabled')) {
+        var num = $("#editplotnum").text();
+        delete tables.displays[active.displays].definition[num];
+        updateTable("displays","delete");
+    }
 }
 
 function updateDisplayRecord() {
@@ -130,8 +158,10 @@ function getData(data){
             actvals[k] = vals[k];
         }
     });
-    updatePlots();
-    updateDisplayValues(actvals);
+    if(pause == 0) {
+        updatePlots();
+        updateDisplayValues(actvals);
+    }
 }
 
 function updateTimer() {
@@ -199,7 +229,7 @@ function makePlot(num) {
     plot[num] = $.jqplot("plot"+num,nulldata,options);
 }
 
-function setConfig(num){
+function setConfig(num) {
     active.displays = num;
     $(".well .plot").parent('.well').remove();
     $.each(tables.displays[num].definition, function(k,v){
@@ -219,11 +249,17 @@ function getEditPlotVals(num) {
     $('option', $("#signalselect")).remove();
     for(var k in tables.inputs)
         if(tables.inputs[k].active > 0) {
-            console.log(k+" - "+plot.signal_list+" - "+$.inArray(k, plot.signal_list));
-            if($.inArray(k, plot.signal_list) >= 0)
-                $("#signalselect").append($('<option/>', {value: tables.inputs[k].id, text: tables.inputs[k].name, selected: "1"}));
-            else
+            if(typeof(plot) !== 'undefined') {
+                $("#delete_plot").removeClass('disabled');
+                if($.inArray(k, plot.signal_list) >= 0)
+                    $("#signalselect").append($('<option/>', {value: tables.inputs[k].id, text: tables.inputs[k].name, selected: "1"}));
+                else
+                    $("#signalselect").append($('<option/>', {value: tables.inputs[k].id, text: tables.inputs[k].name}));
+            }
+            else {
                 $("#signalselect").append($('<option/>', {value: tables.inputs[k].id, text: tables.inputs[k].name}));
+                $("#delete_plot").addClass('disabled');
+            }
         }
 
 }
@@ -318,65 +354,15 @@ function getInputs() {
     console.log("finish: getInputs");
 }
 
-function tableCompare(loc, ref, table_name){
-    var result = [];
-    for(var p in loc){
-        if(!loc.hasOwnProperty(p))
-            continue;
-        if(typeof(ref[p]) === 'undefined'){
-            result.push({operation: 'insert', table: table_name, index: parseInt(loc[p].id), params: loc[p]});
-            continue;
-        }
-        else if(!objectCompare(loc[p], ref[p]))
-            result.push({operation: 'update', table: table_name, index: parseInt(loc[p].id), params: loc[p]});
+function updateTable(table,action){
+    if(action == "delete") {
+        var j=1, temp_table = {};
+        for(var k in tables.displays[active.displays].definition)
+            if(tables.displays[active.displays].definition.hasOwnProperty(k))
+                temp_table[j++] = tables.displays[active.displays].definition[k];
+        tables.displays[active.displays].definition = temp_table;
     }
-    for (var p in ref){
-        if(!ref.hasOwnProperty(p))
-            continue;
-        if(typeof(loc[p]) === 'undefined')
-            result.push({operation: 'delete', table: table_name, index: parseInt(ref[p].id)});
-    }
-    return result;
-}
-
-function objectCompare(loc,ref){
-    var p;
-    loc = JSON.parse(JSON.stringify(loc));
-    ref = JSON.parse(JSON.stringify(ref));
-    p = null;
-
-    for (p in loc) {
-        if (typeof ref[p] === 'undefined') {
-            return 'false';
-        }
-    }
-
-    for (p in loc) {
-        if (loc[p]) {
-            switch (typeof loc[p]) {
-                case 'object':
-                    if (!objectCompare(loc[p], ref[p])) 
-                        return false;
-                    break;
-                case 'function':
-                    if (typeof ref[p] === 'undefined' || (p !== 'equals' && loc[p].toString() !== ref[p].toString())) 
-                        return false;
-                    break;
-                default:
-                    if (loc[p] !== ref[p]) 
-                        return false;
-            }
-        } 
-        else {
-            if (ref[p]) 
-                return false;
-        }
-    }
-
-    for (p in ref) {
-        if (typeof loc[p] === 'undefined')
-            return false;
-    }
-
-    return true;
+    res = [{operation: "update", table: table, index: active.displays, params: {definition: JSON.stringify(tables.displays[active.displays].definition)}}];
+    socket.emit('db_update', res);
+    pause = 1;
 }
