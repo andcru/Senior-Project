@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS `controls` (
   `title` varchar(64) NOT NULL,
   `definition` text NOT NULL,
   UNIQUE KEY `id` (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=3 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 
 INSERT INTO `controls` (`id`, `title`, `definition`) VALUES
 (1, 'Default Control Scheme', '{"1":{"name":"Step 1","values":[0,0,0,0,0,0,0,0],"read_pin":0,"operator":">","read_value":0,"min":0,"max":5},"2":{"name":"Step 2","values":[1,0,0,0,0,0,0,0],"read_pin":3,"operator":">","read_value":512,"min":0,"max":5}}');
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS `conversions` (
   `equation` text NOT NULL,
   `units` text NOT NULL,
   UNIQUE KEY `id` (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=4 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 
 INSERT INTO `conversions` (`id`, `name`, `equation`, `units`) VALUES
 (1, '1:1', 'x', 'vals'),
@@ -34,10 +34,10 @@ CREATE TABLE IF NOT EXISTS `displays` (
   `name` varchar(64) NOT NULL,
   `definition` text NOT NULL,
   UNIQUE KEY `id` (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=18 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 
 INSERT INTO `displays` (`id`, `name`, `definition`) VALUES
-(11, 'Default Display', '{"1":{"signal_list":["1"],"title":"Default Plot","xaxislabel":"Time (s)","yaxislabel":"Value","ymin":"0","ymax":"1024","timespan":"20"}}');
+(1, 'Default Display', '{"1":{"signal_list":["1"],"title":"Default Plot","xaxislabel":"Time (s)","yaxislabel":"Value","ymin":"0","ymax":"1024","timespan":"20"}}');
 
 CREATE TABLE IF NOT EXISTS `inputs` (
   `id` int(2) NOT NULL,

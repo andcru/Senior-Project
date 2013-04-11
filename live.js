@@ -50,6 +50,9 @@ socket.on('loadAllInfo', function(data) {
     setConfig(active.displays);
     makeDisplayValues();
     $('#plot_editor').modal('hide');
+    setTimeout(function() {
+        $("#update_plot").button('reset');
+    },1000);
     pause = 0;
 });
 
@@ -84,7 +87,7 @@ function doRun() {
 function deleteConfig() {
     if(Object.keys(tables.displays).length <= 1)
         alert('You cannot delete your only configuration!');
-    else {
+    else if(confirm("Are you sure you want to delete this configuration?")) {
         var id = $("#display_scheme").val();
         res = [{operation: "delete", table: "displays", index: id}];
         active.displays = 1;
@@ -130,6 +133,7 @@ function loadStates() {
 
 function updatePlot() {
     var num = $("#editplotnum").text();
+    $(this).button('loading');
     var buff = {};
     buff.signal_list = [];
     $("form").find('input').each(function(k,v) {
@@ -247,8 +251,6 @@ function plot_options(title,xlabel,ylabel,ymin,ymax,labels,colors) {
 function makePlot(num,labels,colors) {
     var nd = []; nd.push(null);
     var nulldata = [];
-    console.log(labels);
-    console.log(colors);
     for(var i=0;i<labels.length;i++)
         nulldata.push(nd);
     $("#plot_wrapper").append("<div class='well well-small'><a class='no_hover' href='#plot_editor' num='"+num+"' data-toggle='modal'><i class='icon-cog pull-right' style='font-size: 30px; color: darkgray;'></i></a><div class='plot' id='plot"+num+"' style='height:350px;width:900px;'></div></div>");
@@ -266,7 +268,7 @@ function setConfig(num) {
         var colors = [];
         for(var i=0; i < v.signal_list.length; i++) {
             labels.push(tables.inputs[v.signal_list[i]].name);
-            colors.push(pcolors[v.signal_list[i]]);
+            colors.push(pcolors[v.signal_list[i]-1]);
         }
         makePlot(k,labels,colors);
     });
