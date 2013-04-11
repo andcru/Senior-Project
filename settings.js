@@ -10,6 +10,29 @@ $(document).ready(function(){
 		var sc = $(this).attr('id').split('_');
 		loadWrap('saving '+sc[1], 1, updateTable, sc[1]);
 	});
+	$('#cs_select').on('change', function(){
+		if(parseInt($(this).val()) == active.controls)
+			$('#cs_activate').attr('disabled',true);
+		else
+			$('#cs_activate').attr('disabled',false);
+	})
+	$('#cs_activate').on('click', function(){
+		loadWrap('setting active configuration', 1, activateCS);
+	});
+	$('#cs_delete').on('click', function(){
+		if(confirm('Are you sure you want to delete this control scheme?'))
+			loadWrap('deleting configuration', 1, deleteCS, parseInt($('#cs_select').val()));	
+	});
+	$('#cs_create').on('click', function(){
+		var csname = prompt('Name the control scheme:', 'Test Name');
+		if(csname != null)
+			loadWrap('creating configuration', 1, createCS, csname);
+	});
+	$('#cs_rename').on('click', function(){
+		var newname = prompt('Name', tables.controls[$('#cs_select').val()].title);
+		if(newname != null && newname != tables.controls[$('#cs_select').val()].title)
+			loadWrap('renaming configuration', 1, renameCS, newname);
+	});
 	$("#conversions-container").on('click', "button[id$='delete']", function(){
 		var sc = $(this).attr('id').split('_')[1];
 		if($(this).hasClass('btn-success')){
@@ -43,8 +66,11 @@ $(document).ready(function(){
 			$(this).siblings().attr('disabled', true);
 		else
 			$(this).siblings().attr('disabled', false);
+	});
+	$("#controlscheme_select").on('change', function(){
+		fillControls(parseInt($(this).val()));
+	});
 
-	})
 });
 
 socket.on('loadAllInfo', function(data) {
@@ -82,14 +108,9 @@ function loadWrap(loadtext, wait, fun, a){
 }
 
 function fillAllInfo(){
-	$('#list-controls').empty();
+	console.log('Filling Converions');
 	$('#list-conversions').empty();
 	$('select[id$="type"]').empty();
-	$('#controlscheme_select').empty();
-	active_inputs = [];
-	active_outputs = [];
-
-	console.log('Filling Converions');
 	var convs = [];
 	$.each(tables.conversions, function(k,v){
 		convs.push($('<option />').val(v.id).text(v.name));
@@ -98,6 +119,7 @@ function fillAllInfo(){
 	$('select[id$="type"]').append(convs);
 
 	console.log('Filling Inputs');
+	active_inputs = [];
 	$.each(tables.inputs, function(k,v){
 		$('#input_'+v.id+'_name').val(v.name);
 		$('#input_'+v.id+'_active').bootstrapSwitch('setState',v.active);
@@ -106,6 +128,7 @@ function fillAllInfo(){
 	});
 
 	console.log('Filling Outputs');
+	active_outputs = [];
 	$.each(tables.outputs, function(k,v){
 		$('#output_'+v.id+'_name').val(v.name);
 		$('#output_'+v.id+'_active').bootstrapSwitch('setState',v.active);
@@ -113,16 +136,34 @@ function fillAllInfo(){
 		//controls box stuff
 	})   
 
+	fillControls();
+
+	$('.tooltipped').tooltip();
+}
+
+function fillControls(num){
+	$('#list-controls').empty();
+	$('#controlscheme_select').empty();
+	$('#cs_select').empty();
 	console.log('Filling Controls');
 	var configs = [];
 	$.each(tables.controls, function(k,v){
 		configs.push($('<option />').val(v.id).text(v.title));
 	})
-	$('#controlscheme_select').append(configs);
-	$.each(tables.controls[active.controls].definition, function(k,v){
-		addControlRow(k, v, active_outputs, active_inputs);
-	})
-	$('.tooltipped').tooltip();
+	$('#controlscheme_select, #cs_select').append(configs);
+	$('#cs_select').val(active.controls);
+	if(typeof num != "undefined"){
+		$.each(tables.controls[num].definition, function(k,v){
+			addControlRow(k, v, active_outputs, active_inputs);
+		});
+		$('#controlscheme_select').val(num);
+	}
+	else{
+		$.each(tables.controls[active.controls].definition, function(k,v){
+			addControlRow(k, v, active_outputs, active_inputs);
+		});
+		$('#controlscheme_select').val(active.controls);
+	}
 }
 
 function addControlRow(id, def){
@@ -137,7 +178,7 @@ function addControlRow(id, def){
 			values:     typeof(def.values)     === "undefined" 										 ? [0,0,0,0,0,0,0,0] : def.values, 
 			read_pin:   typeof(def.read_pin)   === "undefined" || active_inputs[def.read_pin-1] != 1 ? 0                  : def.read_pin,
 			read_value: typeof(def.read_value) === "undefined" 										 ? 0                  : def.read_value,
-			operator:   typeof(def.operator)   === "undefined" 										 ? '<'                : '>'
+			operator:   typeof(def.operator)   === "undefined" 										 ? '<'                : def.operator
 		};
 	// if script should check to make sure that control pins are active (assumes control configuration linked to output configuration);
 	var s = $.sprintf('<div class="row-fluid" id="row_control_%s"><div class="span2"><input id="control_%s_name" class="span12" type="text" value="%s" id="control_%s_name"></div><div class="span3 row-fluid">',	 id, id, def.name, id);
@@ -181,6 +222,36 @@ function nextConvid(){
 	return max+1;
 }
 
+function activateCS(){
+	console.log({displays:active.displays, controls: parseInt($('#cs_select').val()), refresh: 'refresh'}); 
+	socket.emit('active_change',{displays:active.displays, controls: parseInt($('#cs_select').val()), refresh: 'refresh'});
+}
+
+function createCS(csname){
+	var id = 0;
+	$('#cs_select').find('option').each(function(){
+		id = Math.max(id, $(this).val());
+	});
+	id++;
+	var res = [{operation: 'insert', table: 'controls', index: id, params: {id: id, title: csname, definition: "{}"}}];
+	console.log(res);
+	socket.emit('active_change', {displays:active.displays, controls: id});
+	socket.emit('db_update',res);
+}
+
+function renameCS(csname){
+	var id = parseInt($('#cs_select').val());
+	var res = [{operation: 'update', table: 'controls', index: id, params: {title: csname}}];
+	console.log(res);
+	socket.emit('db_update',res);
+}
+
+function deleteCS(id){
+	var res = [{operation: 'delete', table: 'controls', index: id}];
+	console.log(res);
+	socket.emit('db_update',res);
+}
+
 function updateTable(table){
 	var temp_table = {};
 	$.each($('[id^="'+table.substring(0,table.length-1)+'_"]'), function(k,v){
@@ -213,9 +284,11 @@ function updateTable(table){
 				temp_table[iande[1]][iande[2]] = $(this).val();
 		}
 	});
+	console.log(temp_table);
 	$('[id^="row_'+table.substring(0,table.length-1)+'_"]').filter(".restorable-row").each(function(){
 		delete temp_table[parseInt($(this).attr('id').split('_')[2])];
 	});
+	console.log(temp_table);
 	if(table != 'controls'){
 		var res = tableCompare(temp_table, tables[table], table);
 		if(res.length){
@@ -227,21 +300,28 @@ function updateTable(table){
 	}
 	else{
 		// If you changed number of rows
-		if(Object.keys(temp_table).toString() != Object.keys(tables.controls[$('#controlscheme_select').val()].definition).toString()) {
-			var j=1, temp_table2 = {};
-			for(var k in temp_table)
-				if(temp_table.hasOwnProperty(k))
-					temp_table2[j++] = temp_table[k];
+		var klist = Object.keys(temp_table).sort(function(a,b){ return (a-b); });
+		if(klist.toString() != Object.keys(tables.controls[$('#controlscheme_select').val()].definition).sort(function(a,b){ return (a-b); }).toString()) {
+			var temp_table2 = {};
+			for(var k = 0; k<klist.length; k++){
+				console.log(klist[k]);
+				console.log(temp_table[klist[k]]);
+				temp_table2[k] = temp_table[klist[k]];
+			}
 			temp_table = temp_table2;
 		}
-		var res = tableCompare(temp_table, tables.controls[$('#controlscheme_select').val()].definition, table);
-		if(res.length){
-			res = [{operation: 'update', table: 'controls', index: parseInt($('#controlscheme_select').val()), params: {definition: JSON.stringify(temp_table)}}];
-			socket.emit('db_update', res);	
-			console.log(res);
+		console.log(temp_table);
+		if(tables.controls.hasOwnProperty($('#controlscheme_select').val())){
+			var res = tableCompare(temp_table, tables.controls[$('#controlscheme_select').val()].definition, table);
+			//console.log({loc: temp_table, ref: tables.controls[$('#controlscheme_select').val()].definition, r: res});
+			if(res.length){
+				res = [{operation: 'update', table: 'controls', index: parseInt($('#controlscheme_select').val()), params: {definition: JSON.stringify(temp_table)}}];
+				socket.emit('db_update', res);	
+				console.log(res);
+			}
+			else
+				$('#loadingscreen').modal('hide');
 		}
-		else
-			$('#loadingscreen').modal('hide');
 	}
 }
 

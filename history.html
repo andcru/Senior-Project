@@ -1,0 +1,69 @@
+<!doctype HTML>
+<html>
+<head>
+	<!--Meta-->
+	<title>daq sp2</title>
+
+	<!--Styles-->
+	<link rel="stylesheet" type="text/css" href="static/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="static/css/bootstrap-switch.css">
+	<link rel="stylesheet" type="text/css" href="static/css/bootstrap-select.min.css">	
+	<link rel="stylesheet" type="text/css" href="static/css/bootstrap-overrides.css">	
+	<link rel="stylesheet" type="text/css" href="static/css/font-awesome.min.css">
+
+	<!--Scripts-->
+	<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="static/js/bootstrap.js"></script>
+	<script src="static/js/bootstrap-switch.js"></script>
+	<script src="static/js/custom-select.js"></script>
+	<script src="history.js"></script>
+
+	
+
+</head>
+
+<body>
+	<div class="container-fluid">
+		<div class="navbar">
+			<div class="navbar-inner">
+
+				<button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+
+				<a class="brand" href=".">daq.sp2</a>
+
+				<div class="nav-collapse collapse">
+					<ul class="nav pull-right">
+						<li><a href="/">live</a></li>
+						<li class="active"><a href="history">history</a></li>
+						<li><a href="settings">settings</a></li>
+						<li><a href="help" >help</a></li>
+					</ul>
+				</div>
+
+			</div>
+		</div>
+	</div>
+
+	<div class="container-fluid">
+        <div class="navbar">
+        	<div class="navbar-inner">
+				<div class="navbar-form pull-right">
+					<a id="download_link" href=""></a>
+					<b>Select a Run: </b><select id="select_run"><option value="">Select...</option></select>
+				  	<div class="btn-group">
+				  		<button id="download_data" class="btn data_see disabled"><i class="icon-download-alt"></i> Download Data</button>
+				  	</div>
+				  	<div class="btn-group">
+				  		<button id="view_data" class="btn data_see disabled"><i class="icon-eye-open"></i> View Data</button>
+				  	</div>
+				</div>
+        	</div>
+        </div>
+    </div>
+
+</body>

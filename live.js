@@ -15,9 +15,11 @@ var   recent_time
     , no_run_text
     , max_disp_config = 0
     , pause = 0
-    , nulldata = [[null],[null],[null],[null],[null],[null],[null],[null]]
     , run_inputs = ["name","rate","duration"]
-    , disp_vals = ["title","xaxislabel","yaxislabel","ymin","ymax","timespan"];
+    , disp_vals = ["title","xaxislabel","yaxislabel","ymin","ymax","timespan"]
+    , pcolors = [ "#000000", "#827800", "#CC9966", "#33FF33", "#FF3333", "#990066", "#666666", "#FFFF33", "#993300", "#009900", "#FF6600"];
+
+//[ "#4bb2c5", "#c5b47f", "#EAA228", "#579575", "#839557", "#958c12", "#953579", "#4b5de4", "#d8b83f", "#ff5800", "#0085cc"];
 
 socket.on('reading', function(data) {
     getData(data);
@@ -60,6 +62,7 @@ $(document).ready(function(){
     $("#delete_config").click(deleteConfig);
     $("#new_plot").click(newPlot);
     $("#display_scheme").change(switchScheme);
+    $("#loadingscreen").modal('hide');
 });
 
 function doRun() {
@@ -79,17 +82,23 @@ function doRun() {
 }
 
 function deleteConfig() {
-    var id = $("#display_scheme").val();
-    res = [{operation: "delete", table: "displays", index: id}];
-    active.displays = 1;
-    socket.emit('active_change', active);
-    socket.emit('db_update', res);
-    pause = 1;
+    if(Object.keys(tables.displays).length <= 1)
+        alert('You cannot delete your only configuration!');
+    else {
+        var id = $("#display_scheme").val();
+        res = [{operation: "delete", table: "displays", index: id}];
+        active.displays = 1;
+        socket.emit('active_change', active);
+        socket.emit('db_update', res);
+        pause = 1;
+    }
 }
 
 function switchScheme() {
     active.displays = parseInt($(this).val());
-    socket.emit('active_change', active);
+    var outs = JSON.parse(JSON.stringify(active));
+    outs.refresh = "1";
+    socket.emit('active_change', outs);
 }
 
 function newPlot() {
@@ -102,9 +111,11 @@ function newConfig() {
     var name = window.prompt("Please enter the new configuration name");
     if (name != null && name != "") {
         var outs = [];
-        var def = {};
+        active.displays = max_disp_conf + 1;
         outs[0] = {operation: "insert", table: "displays"};
-        outs[0].params = {name: name, definition: JSON.stringify(def) };
+        outs[0].params = {name: name, id: active.displays, definition: "{}" };
+        pause = 1;
+        socket.emit('active_change',active);
         socket.emit('db_update',outs);
     }
 }
@@ -187,11 +198,12 @@ function pad (str, max) {
     return str.length < max ? pad("0" + str, max) : str;
 }
 
-function plot_options(title,xlabel,ylabel,ymin,ymax) {
+function plot_options(title,xlabel,ylabel,ymin,ymax,labels,colors) {
     this.title = {
         text: title,
         show: true
     };
+    this.seriesColors = colors;
     this.axes = {
         xaxis: {
             renderer: $.jqplot.DateAxisRenderer,
@@ -218,14 +230,31 @@ function plot_options(title,xlabel,ylabel,ymin,ymax) {
             max: parseInt(ymax)
         }
     };
+    this.legend = {
+        renderer: $.jqplot.EnhancedLegendRenderer,
+        show: true,
+        placement: 'outsideGrid',
+        labels: labels,
+        rendererOptions: {
+            numberColumns: 1
+        }
+    };
     this.seriesDefaults = {
         showMarker: false
     };
 }
 
-function makePlot(num) {
+function makePlot(num,labels,colors) {
+    var nd = []; nd.push(null);
+    var nulldata = [];
+    console.log(labels);
+    console.log(colors);
+    for(var i=0;i<labels.length;i++)
+        nulldata.push(nd);
     $("#plot_wrapper").append("<div class='well well-small'><a class='no_hover' href='#plot_editor' num='"+num+"' data-toggle='modal'><i class='icon-cog pull-right' style='font-size: 30px; color: darkgray;'></i></a><div class='plot' id='plot"+num+"' style='height:350px;width:900px;'></div></div>");
-    options = new plot_options(tables.displays[active.displays].definition[num].title,tables.displays[active.displays].definition[num].xaxislabel,tables.displays[active.displays].definition[num].yaxislabel,tables.displays[active.displays].definition[num].ymin,tables.displays[active.displays].definition[num].ymax);
+    options = new plot_options(tables.displays[active.displays].definition[num].title,tables.displays[active.displays].definition[num].xaxislabel,tables.displays[active.displays].definition[num].yaxislabel,tables.displays[active.displays].definition[num].ymin,tables.displays[active.displays].definition[num].ymax,labels,colors);
+//    if(arr.length > 8) 
+//        options.legend.rendererOptions.numberColumns = 2;
     plot[num] = $.jqplot("plot"+num,nulldata,options);
 }
 
@@ -233,7 +262,13 @@ function setConfig(num) {
     active.displays = num;
     $(".well .plot").parent('.well').remove();
     $.each(tables.displays[num].definition, function(k,v){
-        makePlot(k);
+        var labels = [];
+        var colors = [];
+        for(var i=0; i < v.signal_list.length; i++) {
+            labels.push(tables.inputs[v.signal_list[i]].name);
+            colors.push(pcolors[v.signal_list[i]]);
+        }
+        makePlot(k,labels,colors);
     });
     $("#add_plot_link").attr('num',Object.keys(tables.displays[active.displays].definition).length+1);
     $("a[href='#plot_editor']").click(function() {
@@ -291,7 +326,7 @@ function convertTime(timestamp){
 
 function convertData(data,type){
     var x = parseInt(data);
-    return eval(tables.conversions[type].equation);
+    return eval("with (Math) { "+tables.conversions[type].equation+"; }");
 }
 
 function updatePlots() {
@@ -348,7 +383,7 @@ function toggleDisabled(elem_id,force) {
 function getInputs() {
     console.log("start: getInputs");
     $.each(tables.inputs,function(k,v){
-        if(!run.run && v.active > 0)
+        if(v.active > 0 && typeof(data_converted[k]) == "undefined")
             data_converted[k] = [];
     });
     console.log("finish: getInputs");

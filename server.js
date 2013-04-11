@@ -59,17 +59,40 @@ io.sockets.on('connection', function (socket) {
       killRun();
   });
   socket.on('active_change', function (data) {
-    active = data;
-    socket.emit('loadAllInfo', {tables: tables, active: active});
+    active.controls = data.controls;
+    active.displays = data.displays;
+    if(data.hasOwnProperty("refresh"))
+      socket.emit('loadAllInfo', {tables: tables, active: active});
   });
   socket.on('db_request', function (data) {
     console.log(data);
     db_request(data);
   });
+  socket.on('factory_reset', function (data) {
+    if(data.hasOwnProperty("reset")) {
+      exec("mysql -u ccnode -pccsp703 ccnode < reset.sql", function (error, stdout, stderr) {
+        if (error === null && stderr == "") {
+          loadTable();
+        }
+      });
+    }
+    else if(data.hasOwnProperty("delete")) {
+      exec("mysql -u ccnode -pccsp703 ccnode < delete.sql", function (error, stdout, stderr) {
+        if (error === null && stderr == "") {
+          exec("rm runs -r");
+          exec("mkdir runs");
+          loadTable();
+        }
+      });
+    }
+  });
   socket.on('db_update', function (data) {
     console.log(data);
     db_update(data);
-  })
+  });
+  socket.on('get_runs', function (data) {
+    get_runs(data);
+  });
   socket.on('disconnect', function () {
     conn--;
     console.log("Total connections: "+conn);
@@ -79,7 +102,7 @@ io.sockets.on('connection', function (socket) {
 //Set Functions
 function handler (req, res) {
   var file = url.parse(req.url).pathname;
-  if (file == "/") { file = 'index';}
+  if (file == "/") { file = 'live';}
   var ext = file.split('.');
   var cext = ext.length;
   if(cext == 1){
@@ -115,6 +138,14 @@ function handler (req, res) {
   });
 }
 
+function get_runs(data) {
+  db.query('SELECT id,title FROM runs', function (err, rows, fields) {
+    if(err) throw err;
+    var ret={}; ret = rows;
+    io.sockets.emit('return_runs', ret);
+  });
+}
+
 function db_request(data) {
   db.query('SELECT * FROM ' + sql.escapeId(data.table), function (err, rows, fields) {
     if(err) throw err;
@@ -142,8 +173,6 @@ function db_update(data) {
     db.query(qry, function (err, result) {
       if(err) throw err;
       count++;
-      if(data[op].operation == "insert" && data[op].table == "displays")
-        active.displays = result.insertId;
       if(count === data.length) {
         loadTable();
       }
@@ -200,7 +229,6 @@ function db_pullTable(count) {
 function setRun(data) {
   if(run <= 0) {
     var rinfo_s = {};
-    tables.title = data.name;
     del  = 1000/data.rate;
     var starttime = new Date();
     et = starttime.getTime() + data.duration*60*1000;
@@ -215,6 +243,7 @@ function setRun(data) {
         eval("rinfo_s."+prop+" = JSON.stringify(rinfo."+prop+");");
       else
         eval("rinfo_s."+prop+" = rinfo."+prop+";");
+    rinfo_s.title = data.name;
     console.log(rinfo_s);
     db.query("INSERT INTO runs SET ?",rinfo_s, function (err, result) {
       if(err) throw err;

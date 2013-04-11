@@ -14,7 +14,8 @@
 	<script type="text/javascript" src="static/js/jqplot_plugins/jqplot.dateAxisRenderer.js"></script>
 	<script type="text/javascript" src="static/js/jqplot_plugins/jqplot.canvasTextRenderer.min.js"></script>
 	<script type="text/javascript" src="static/js/jqplot_plugins/jqplot.canvasAxisLabelRenderer.min.js"></script>
-	<script src="display.js"></script>
+	<script type="text/javascript" src="static/js/jqplot_plugins/jqplot.enhancedLegendRenderer.js"></script>
+	<script src="live.js"></script>
 
 	<!--Styles-->
 	<link rel="stylesheet" type="text/css" href="static/css/bootstrap.min.css">
@@ -35,6 +36,7 @@
 			<h3 id="loadtext">Loading...</h3>
 		</div>
 	</div>
+	<script>$("#loadingscreen").modal('show');</script>
 	
 	<div class="container-fluid">
 		<div class="navbar">
@@ -50,7 +52,7 @@
 
 				<div class="nav-collapse collapse">
 					<ul class="nav pull-right">
-						<li class="active"><a href="display">live</a></li>
+						<li class="active"><a href="/">live</a></li>
 						<li><a href="history">history</a></li>
 						<li><a href="settings">settings</a></li>
 						<li><a href="help" >help</a></li>

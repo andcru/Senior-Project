@@ -86,7 +86,7 @@ function convertData() {
 
 function convert(data,type) {
 	var x = parseInt(data);
-    return eval(runvars.conversions[type].equation);
+    return eval("with (Math) { "+runvars.conversions[type].equation+"; }");
 }
 
 function makeCSV() {
