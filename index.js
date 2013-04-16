@@ -1,6 +1,6 @@
 // STORY: On connecting to server, server returns an object.
 // This object contains the contents of each of the config tables, in full
-var socket = io.connect('http://cc.acrudge.com');
+var socket = io.connect('/');
 var tables, active, active_outputs = [], active_inputs = [];
 
 $(document).ready(function(){
