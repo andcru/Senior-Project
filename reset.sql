@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS `controls` (
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 
 INSERT INTO `controls` (`id`, `title`, `definition`) VALUES
-(1, 'Default Control Scheme', '{"1":{"name":"Step 1","values":[0,0,0,0,0,0,0,0],"read_pin":0,"operator":">","read_value":0,"min":0,"max":5},"2":{"name":"Step 2","values":[1,0,0,0,0,0,0,0],"read_pin":3,"operator":">","read_value":512,"min":0,"max":5}}');
+(1, 'Default Control Scheme', '{"1":{"name":"Step 1","values":[0,0,0,0,0,0,0,0],"read_pin":1,"operator":">","read_value":512,"min":0,"max":5},"2":{"name":"Step 2","values":[1,0,0,0,0,0,0,0],"read_pin":0,"operator":">","read_value":0,"min":0,"max":5}}');
 
 CREATE TABLE IF NOT EXISTS `conversions` (
   `id` tinyint(2) NOT NULL AUTO_INCREMENT,

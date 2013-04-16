@@ -141,6 +141,25 @@ function fillAllInfo(){
 	$('.tooltipped').tooltip();
 }
 
+function convertData(data,type){
+    var x = data;
+    return eval("with (Math) { "+tables.conversions[type].equation+"; }");
+}
+
+function unConvertData(data,type) {
+	var eq = tables.conversions[type].equation;
+	var min = 1024, key, val;
+	for(var x=0;x<1024;x++) {
+		val = eval("with (Math) { abs("+eq+"-"+data+"); }");
+		if(val < min) {
+			key = x;
+			min = val;
+		}
+	}
+	console.log("Unconverted "+data+" (type "+type+") -> "+key);
+	return key;
+}
+
 function fillControls(num){
 	$('#list-controls').empty();
 	$('#controlscheme_select').empty();
@@ -188,7 +207,7 @@ function addControlRow(id, def){
 	s += $.sprintf('<option value="0" %s>None</option>', def.read_pin == 0 ? 'selected' : '');
 	for(var i = 1; i<=16; i++)
 		s += $.sprintf('<option %s value="%s" %s>(%s) %s</option>', active_inputs[i-1] ? '' : 'disabled', i, i==def.read_pin ? 'selected' : '', i, tables.inputs[i].name)	;
-	s += $.sprintf('</select><select %s class="show-tick dropup span2" id="control_%s_operator"><option %s value="<"><</option><option %s value=">">></option></select> <input %s class="span3" type="number" min="0" max="1023" id="control_%s_read_value" value="%s"></div><div class="span1"><input class="span12" type="number" min="0" step="any" id="control_%s_min" value="%s"></div><div class="span1"><input class="span12" type="number" min="0" step="any" id="control_%s_max" value="%s"></div>', def.read_pin ? '' : 'disabled="disabled"', id, def.operator == '<' ? 'selected' : '', def.operator == '>' ? 'selected' : '', def.read_pin ? '' : 'disabled="disabled"', id, def.read_value, id, def.min, id, def.max);
+	s += $.sprintf('</select><select %s class="show-tick dropup span2" id="control_%s_operator"><option %s value="<"><</option><option %s value=">">></option></select> <input %s class="span3" type="number" step="any" id="control_%s_read_value" value="%s"></div><div class="span1"><input class="span12" type="number" min="0" step="any" id="control_%s_min" value="%s"></div><div class="span1"><input class="span12" type="number" min="0" step="any" id="control_%s_max" value="%s"></div>', def.read_pin ? '' : 'disabled="disabled"', id, def.operator == '<' ? 'selected' : '', def.operator == '>' ? 'selected' : '', def.read_pin ? '' : 'disabled="disabled"', id, def.read_pin > 0 ? convertData(def.read_value,tables.inputs[def.read_pin].type): 0, id, def.min, id, def.max);
 	s += $.sprintf('<button class="btn span1 btn-danger" id="control_%s_delete">delete</button></div>',id);
 	$('#list-controls').append(s);
 }
@@ -273,7 +292,7 @@ function updateTable(table){
 				temp_table[iande[1]].values[iande[3]-1] = $(this).hasClass('active') ? 1 : 0;
 				break;
 			case 'read':
-				temp_table[iande[1]][iande[2]+'_'+[iande[3]]] = parseInt($(this).val());
+				temp_table[iande[1]][iande[2]+'_'+[iande[3]]] = parseFloat($(this).val());
 				break;
 			case 'max':
 			case 'min':
@@ -284,11 +303,9 @@ function updateTable(table){
 				temp_table[iande[1]][iande[2]] = $(this).val();
 		}
 	});
-	console.log(temp_table);
 	$('[id^="row_'+table.substring(0,table.length-1)+'_"]').filter(".restorable-row").each(function(){
 		delete temp_table[parseInt($(this).attr('id').split('_')[2])];
 	});
-	console.log(temp_table);
 	if(table != 'controls'){
 		var res = tableCompare(temp_table, tables[table], table);
 		if(res.length){
@@ -304,14 +321,16 @@ function updateTable(table){
 		if(klist.toString() != Object.keys(tables.controls[$('#controlscheme_select').val()].definition).sort(function(a,b){ return (a-b); }).toString()) {
 			var temp_table2 = {};
 			for(var k = 0; k<klist.length; k++){
-				console.log(klist[k]);
-				console.log(temp_table[klist[k]]);
-				temp_table2[k] = temp_table[klist[k]];
+				temp_table2[k+1] = temp_table[klist[k]];
 			}
 			temp_table = temp_table2;
 		}
 		console.log(temp_table);
 		if(tables.controls.hasOwnProperty($('#controlscheme_select').val())){
+			// Convert values to bits
+			for(var k in temp_table)
+				if(temp_table[k].read_pin > 0)
+					temp_table[k].read_value = unConvertData(temp_table[k].read_value,tables.inputs[temp_table[k].read_pin].type);
 			var res = tableCompare(temp_table, tables.controls[$('#controlscheme_select').val()].definition, table);
 			//console.log({loc: temp_table, ref: tables.controls[$('#controlscheme_select').val()].definition, r: res});
 			if(res.length){

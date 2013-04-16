@@ -139,7 +139,7 @@ function handler (req, res) {
 }
 
 function get_runs(data) {
-  db.query('SELECT id,title FROM runs', function (err, rows, fields) {
+  db.query('SELECT id,title,starttime FROM runs', function (err, rows, fields) {
     if(err) throw err;
     var ret={}; ret = rows;
     io.sockets.emit('return_runs', ret);
@@ -230,10 +230,10 @@ function setRun(data) {
   if(run <= 0) {
     var rinfo_s = {};
     del  = 1000/data.rate;
-    var starttime = new Date();
-    et = starttime.getTime() + data.duration*60*1000;
-    var endtime = new Date(et);
     rinfo = JSON.parse(JSON.stringify(tables));
+    rinfo.starttime = new Date();
+    et = rinfo.starttime.getTime() + data.duration*60*1000;
+    rinfo.endtime = new Date(et);
     for(var prop in active) {
         eval("rinfo."+prop+" = tables."+prop+"["+active[prop]+"];");
         console.log("rinfo."+prop+" = tables."+prop+"["+active[prop]+"];");
@@ -248,13 +248,13 @@ function setRun(data) {
     db.query("INSERT INTO runs SET ?",rinfo_s, function (err, result) {
       if(err) throw err;
       run = result.insertId;
-      rcont = {state: 0, begin: starttime.getTime()};
+      rcont = {state: 0, begin: rinfo.starttime.getTime()};
       newState();
       console.log("Starting run "+run);
       rend = setTimeout(function() {
         killRun();
       }, data.duration*60*1000);
-      io.sockets.emit('running', { run: run, end: et, now: starttime.getTime(), del: del });
+      io.sockets.emit('running', { run: run, end: et, now: rinfo.starttime.getTime(), del: del });
     });
   }
   else

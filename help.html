@@ -1,0 +1,136 @@
+<!doctype HTML>
+<html>
+<head>
+	<!--Meta-->
+	<title>daq sp2</title>
+
+	<!--Styles-->
+	<link rel="stylesheet" type="text/css" href="static/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="static/css/bootstrap-switch.css">
+	<link rel="stylesheet" type="text/css" href="static/css/bootstrap-overrides.css">	
+	<link rel="stylesheet" type="text/css" href="static/css/font-awesome.min.css">
+
+	<!--Scripts-->
+	<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+	<script src="static/js/jquery.sprintf.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="static/js/bootstrap.js"></script>
+	
+	<style>
+		.affix {
+			top: 20px;
+		}
+		.affix-bottom {
+  		position: absolute;
+  		top: auto;
+  		bottom: 20px;
+		}
+		.span10 li{
+			line-height:30px;
+		}
+	</style>
+
+</head>
+
+<body>
+	<div id="loadingscreen" class="modal hide fade text-center" style="top:50%; height:170px; margin-top:-85px">
+		<div class="modal-header">
+			<h2>daq.sp2</h2>
+		</div>
+		<div class="modal-body">
+			<h3 id="loadtext">Loading...</h3>
+		</div>
+	</div>
+
+
+	<div class="container-fluid">
+		<div class="navbar">
+			<div class="navbar-inner">
+
+				<a class="brand" href=".">daq.sp2</a>
+
+				<ul class="nav pull-right">
+					<li><a href="/">live</a></li>
+					<li><a href="history">history</a></li>
+					<li><a href="settings">settings</a></li>
+					<li class="active"><a href="help" >help</a></li>
+				</ul>
+
+			</div>
+		</div>
+	</div>
+
+
+	<div class="container-fluid">
+		<div class="row-fluid" style="position:relative">
+			<div class="span2" style="width:14.893617021276595%;">
+				<div class="well" id="helpnav" style="padding:8px 0;" data-spy="affix" data-offset-top="62">
+					<ul class="nav nav-list">
+						<li class="nav-header">live</li>
+						<li><a href="#live-startrun">Starting A Run</a></li>
+						<li><a href="#live-plotconfigs">Plot Configurations</a></li>
+						<li class="nav-header">history</li>
+						<li><a href="#history_downloads">Download CSV</a></li>
+						<li><a href="#history_view">View Past Run</a></li>
+						<li class="nav-header">settings</li>
+						<li><a href="#settings_inputs">Inputs</a></li>
+						<li><a href="#setings_conversions">Conversions</a></li>
+						<li><a href="#settings_outputs">Outputs</a></li>
+						<li><a href="#settings_controlmanage">Manage Controls</a></li>
+						<li><a href="#settings_controledit">Edit Controls</a></li>
+						<li class="nav-header">reset</li>
+						<li><a href="#reset">Restore Factory Settings</a></li>
+					</ul>
+				</div>
+			</div>
+
+			<div class="span10 well">
+				<h3 style="margin-top:-.4em">live</h3>
+					<h4 id="live-startrun">Starting A Run</h4>
+						<ul>
+							<li>Before starting a run, make sure all <a href="#settings_inputs">settings</a> are correctly configured. You may find it easier to set the proper <a href="#live_plotconfigs">plot configuration</a> before proceeding.</li>
+							<li>To actually start the run, first enter a name for the run, the sampling rate (in Hz) and the run duration (in minutes).</li>
+							<li>The run will begin when the <span class="btn">Start</span> button is pressed. When this happens, the <span class="btn">Stop</span> button will become active.</li>
+						</ul>
+					<h4 id="live-plotconfigs">Plot Configurations</h4>
+						<ul>
+							<li>Plot configurations are used to store the look of the "live" page.</li>
+							<li>To create a new configuration, hit the "New Configuration" button at the bottom of the page and fill in a name when prompted</li>
+							<li>To delete the current configuration, hit the "Delete Configuration" and confirm when prompted.</li>
+							<li>To add a plot to an existing configuration, hit the "Add Plot" button at the bottom right.</li>
+							<li>To edit or delete an existing plot, hit the gear at the top right of the plot.</li>
+						</ul>
+				<h3>history</h3>
+					<h4 id="history_downloads">Download CSV</h4>
+						<ul>
+							<li>Run data from previous runs can be downloaded in CSV (comma separated value) format by selecting the run number and hitting download.</li>
+							<li class="muted">The CSV currently does not support showing control state changes. This functionality is currently being implemented.</li>
+						</ul>
+					<h4 id="history_view">View Past Run</h4>
+						<ul>
+							<li class="muted">This functionality is currently being implemented</li>
+						</ul>
+				<h3>settings</h3>
+					<h4 id="settings_inputs">Inputs</h4>
+						<ul>
+							<li>This system has 16 analog inputs (digital inputs can be emulated by using the default <a href="#settings_conversion">conversion</a> "digital" which assumes anything less than Vcc/2 is low and anything greater than that value is high).</li>
+							<li>Each input can be named and assigned a specified conversion.</li>
+							<li>When a run is performed, only those inputs that are set active will be stored and made available for plotting.</li>
+						</ul>
+					<h4 id="setings_conversions">Conversions</h4>
+						<ul>
+							<li>Any number of conversions can be created. These should map between the "analog" values (0-1023) obtained on the analog inputs and the real value that the attached sensor is actually reading.</li>
+							<li>The equation should be written using javascript Math types. The equation will be evaluated in a Math environment, so use of the "Math" prefix for functions is unnecessary.</li>
+							<li>The equations can be written in terms of "x".</li>
+							<li>Example functions include:
+								<ul>
+									<li>x <span class="muted">// for direct output of the read value (0-1023)</span></li>
+									<li>14*pow(x^2)-3*x+4 <span class="muted">// arbitrary polynomial expression; the <code>pow</code> function is used for exponentiation</span></li>
+								</ul>
+							</li>
+						</ul>
+					<h4 id="settings_outputs">Outputs</h4>
+					<h4 id="settings_controlmanage">Manage Controls</h4>
+					<h4 id="settings_controledit">Edit Controls</h4>
+		</div>
+	</div>
