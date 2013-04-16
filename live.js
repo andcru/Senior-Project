@@ -26,6 +26,7 @@ socket.on('reading', function(data) {
 });
 
 socket.on('state_change', function(data) {
+    console.log(data);
     updateDisplayStates(data);
 });
 
@@ -168,9 +169,9 @@ function getData(data){
             var holder = data_converted[k];
             if( holder.length == data_len_max )
                 holder.shift();   
-            holder.push([time, convertData(vals[k], v.type)]);
+            holder.push([time, convertData(vals[k-1], v.type)]);
             data_converted[k] = holder;
-            actvals[k] = vals[k];
+            actvals[k] = vals[k-1];
         }
     });
     if(pause == 0) {

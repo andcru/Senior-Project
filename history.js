@@ -6,7 +6,7 @@ socket.on('return_runs', function(data) {
     console.log(data);
     for(var k in data) {
         console.log(data[k]);
-        $("#select_run").append($('<option/>', {value: data[k].id, text: data[k].title}));
+        $("#select_run").append($('<option/>', {value: data[k].id, text: data[k].title+" ("+data[k].starttime.replace("T"," ").replace(".000Z","")+")"}));
     }
 });
 
