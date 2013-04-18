@@ -304,6 +304,7 @@ function getEditPlotVals(num) {
 
 function onRunStart() {
     rem_time = Math.ceil(run.end - run.now)/1000;
+    clearInterval(timer);
     timer = setInterval(updateTimer,1000);
     toggleDisabled("startNewRun",0);
     toggleDisabled("stopRun",1);
