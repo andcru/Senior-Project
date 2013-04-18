@@ -1,5 +1,6 @@
 // <-------------------------------------- Initialization Blob -------------------------------------->
 
+
 // Setup Server
 var app = require('http').createServer(handler)
   , url = require('url')
@@ -223,7 +224,8 @@ function db_pullTable(count) {
     // If done loading whole table
     if(Object.keys(tables).length == run_tables.length) {
       io.sockets.emit('loadAllInfo', {tables: tables, active: active});
-      setOutput();
+      if(run <= 0)
+      	setOutput();
     }
   });
 }
