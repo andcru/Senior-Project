@@ -13,6 +13,7 @@ var 	runvars = {}
 	,	csvdata = []
 	,	min_id
 	,	min_time
+	,	used_inputs_r = []
 	,	used_inputs = []
 	,	headings = ["Reading ID"]
 	,	writer
@@ -47,11 +48,12 @@ function parseData() {
 function loadData() {
 	for(var k in runvars.inputs)
 		if(runvars.inputs[k].active > 0) {
-			used_inputs.push("r"+k); 
+			used_inputs_r.push("r"+k); 
+			used_inputs.push(k);
 			headings.push(runvars.inputs[k].name+" ("+runvars.conversions[runvars.inputs[k].type].units+")");
 		}
 	headings.push("Time (s)");
-	db.query('SELECT id,'+ used_inputs +',timestamp FROM readings WHERE run = ' + sql.escape(run), function (err, rows, fields) {
+	db.query('SELECT id,'+ used_inputs_r +',timestamp FROM readings WHERE run = ' + sql.escape(run), function (err, rows, fields) {
 	    if(err) throw err;
 	    rundata = rows;
 	    db.query('SELECT MIN(id) AS mr, MIN(timestamp) AS mt FROM readings WHERE run = ' + sql.escape(run), function (err,rows,fields) {
@@ -61,7 +63,7 @@ function loadData() {
 	    	db.query('SELECT * FROM state_history WHERE run = ' + sql.escape(run), function (err,rows,fields) {
 		    	if(err) throw err;
 		    	history = rows;
-		    	console.log(history);		    	
+		    	//console.log(history);		    	
 		    	convertData();
 		    });
 	    });
@@ -72,9 +74,8 @@ function convertData() {
 	for(var k in rundata) {
 		var row = rundata[k];
 		var rdg = [row.id-min_id+1];
-		for(var i = 1; i <= used_inputs.length; i++) {
-			rdg.push(convert(row["r"+i],runvars.inputs[i].type));
-		}
+		for(var i = 0; i < used_inputs.length; i++)
+			rdg.push(convert(row[used_inputs_r[i]],runvars.inputs[used_inputs[i]].type));
 		//var date = new Date(row.timestamp);
 		//var excel_format = date.getFullYear()+"-"+(date.getMonth()+1)+"-"+date.getDate()+" "+date.getHours()+":"+date.getMinutes()+":"+date.getSeconds()+"."+date.getMilliseconds();
 		var run_time = (row.timestamp - min_time)/1000;
