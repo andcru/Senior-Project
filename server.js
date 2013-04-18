@@ -196,8 +196,8 @@ function db_insert(data) {
 // <--------------------- Andy's Section ----------------------->
 
 function serverStart() {
-  loadTable();
   openGPIO();
+  loadTable();
   sampler();
 }
 
@@ -220,8 +220,11 @@ function db_pullTable(count) {
       buff[rows[row].id] = rows[row];
     eval('tables.'+run_tables[count]+' = buff;');
     console.log('Table "'+run_tables[count]+'" loaded!');
-    if(Object.keys(tables).length == run_tables.length && conn > 0)
+    // If done loading whole table
+    if(Object.keys(tables).length == run_tables.length) {
       io.sockets.emit('loadAllInfo', {tables: tables, active: active});
+      setOutput();
+    }
   });
 }
 
@@ -267,6 +270,7 @@ function killRun() {
   et = 0;
   clearTimeout(rend);
   clearTimeout(ctlend);
+  setOutput();
   io.sockets.emit('running', { run: 0 });
   makeCSV(old_run);
 }
@@ -338,8 +342,13 @@ function newState() {
 }
 
 function setOutput(arr) {
-  for(var i=0; i < pins.length; i++)
-    gpio.write(pins[i],arr[i]);
+  if(typeof(arr) !== "undefined")
+    for(var i=0; i < pins.length; i++)
+      gpio.write(pins[i],arr[i]);
+  else
+    for(var i=0; i < pins.length; i++)
+      gpio.write(pins[i],tables.outputs[i+1]["default"]);
+  console.log("Outputs set.");
 }
 
 function openGPIO() {

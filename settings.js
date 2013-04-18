@@ -55,6 +55,16 @@ $(document).ready(function(){
 			$(this).removeClass('btn-danger').addClass('btn-success').text('restore');
 		}		
 	})
+	$("#outputs-container").on('switch-change', function(e,data){
+		var sc = data.el[0].parentElement.parentElement.id.split('_')[1];
+		if(data.value)
+			$("#output_"+sc+"_default").bootstrapSwitch('setActive',true);
+		else{
+			$("#output_"+sc+"_default").bootstrapSwitch('setState',false);
+			$("#output_"+sc+"_default").bootstrapSwitch('setActive',false);
+		}
+	})
+
 	$("#new_conversion").on('click', function(){
 		addConversionRow();
 	});
@@ -132,6 +142,11 @@ function fillAllInfo(){
 	$.each(tables.outputs, function(k,v){
 		$('#output_'+v.id+'_name').val(v.name);
 		$('#output_'+v.id+'_active').bootstrapSwitch('setState',v.active);
+		if(v.active)
+			$('#output_'+v.id+'_default').bootstrapSwitch('setState',v.default);
+		else
+			$('#output_'+v.id+'_default').bootstrapSwitch('setActive',false);
+
 		active_outputs.push(v.active);
 		//controls box stuff
 	})   
@@ -284,6 +299,7 @@ function updateTable(table){
 			case 'delete':
 				break;
 			case 'active':
+			case 'default':
 				temp_table[iande[1]][iande[2]] = $(this).parent('div').bootstrapSwitch('status') ? 1 : 0;
 				break;
 			case 'pin':
