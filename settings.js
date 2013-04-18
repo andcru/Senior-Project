@@ -56,12 +56,14 @@ $(document).ready(function(){
 		}		
 	})
 	$("#outputs-container").on('switch-change', function(e,data){
-		var sc = data.el[0].parentElement.parentElement.id.split('_')[1];
+		var d = data.el[0].parentElement.parentElement.id.split('_');
+		if(d[2] != "active")
+			return;
 		if(data.value)
-			$("#output_"+sc+"_default").bootstrapSwitch('setActive',true);
+			$("#output_"+d[1]+"_default").bootstrapSwitch('setActive',true);
 		else{
-			$("#output_"+sc+"_default").bootstrapSwitch('setState',false);
-			$("#output_"+sc+"_default").bootstrapSwitch('setActive',false);
+			$("#output_"+d[1]+"_default").bootstrapSwitch('setState',false);
+			$("#output_"+d[1]+"_default").bootstrapSwitch('setActive',false);
 		}
 	})
 

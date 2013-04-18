@@ -18,13 +18,14 @@
 	<script src="static/js/jquery.smooth-scroll.min.js"></script>
 	<script>
 		$(document).ready(function(){
-			$('body a').smoothScroll();
+			$('body a').smoothScroll({offset: -10});
 		});
 	</script>
 
 	<style>
 		.affix {
 			top: 20px;
+			bottom: auto;
 		}
 		.affix-bottom {
   		position: absolute;
@@ -70,118 +71,138 @@
 	<div class="container-fluid">
 		<div class="row-fluid" style="position:relative">
 			<div class="span2" style="width:14.893617021276595%;">
-				<div class="well" id="helpnav" style="padding:8px 0;" data-spy="affix" data-offset-top="62">
+				<div class="well" id="helpnav" style="padding:8px 0 0; margin:0" data-spy="affix" data-offset-top="62" data-offset-bottom="20">
 					<ul class="nav nav-list">
-						<li class="nav-header">live</li>
+						<li class="nav-header"><a href="#live">live</a></li>
 						<li><a href="#live-startrun">Starting A Run</a></li>
 						<li><a href="#live-plotconfigs">Plot Configurations</a></li>
-						<li class="nav-header">history</li>
+						<li class="nav-header"><a href="#history">history</a></li>
 						<li><a href="#history_downloads">Download CSV</a></li>
 						<li><a href="#history_view">View Past Run</a></li>
-						<li class="nav-header">settings</li>
+						<li class="nav-header"><a href="#settings">settings</a></li>
 						<li><a href="#settings_inputs">Inputs</a></li>
 						<li><a href="#settings_conversions">Conversions</a></li>
 						<li><a href="#settings_outputs">Outputs</a></li>
 						<li><a href="#settings_controlmanage">Manage Controls</a></li>
 						<li><a href="#settings_controledit">Edit Controls</a></li>
-						<li class="nav-header">reset</li>
-						<li><a href="#reset">Restore Factory Settings</a></li>
+						<li class="nav-header"><a href="#reset">reset</a></li>
+						<li><a href="#reset_settings">Restore Factory Settings</a></li>
+						<li><a href="#reset_data">Delete All Run History</a></li>
 					</ul>
 				</div>
 			</div>
 
-			<div class="span10 well">
-				<h3 style="margin-top:-.4em">live</h3>
-					<h4 id="live-startrun">Starting A Run</h4>
-						<ul>
-							<li>Before starting a run, make sure all <a href="#settings_inputs">settings</a> are correctly configured. You may find it easier to set the proper <a href="#live_plotconfigs">plot configuration</a> before proceeding.</li>
-							<li>To actually start the run, first enter a name for the run, the sampling rate (in Hz) and the run duration (in minutes).</li>
-							<li>The run will begin when the <span class="btn">Start</span> button is pressed. When this happens, the <span class="btn">Stop</span> button will become active.</li>
-						</ul>
-					<h4 id="live-plotconfigs">Plot Configurations</h4>
-						<ul>
-							<li>Plot configurations are used to store the look of the "live" page.</li>
-							<li>To create a new configuration, hit the <span class="btn btn-primary" id="new_config"><i class="icon-ok-circle icon-white"></i> New Configuration</span> button at the bottom of the page and fill in a name when prompted</li>
-							<li>To delete the current configuration, hit the <span class="btn btn-danger" id="delete_config"><i class="icon-remove-circle icon-white"></i> Delete configuration</span> and confirm when prompted.</li>
-							<li>To add a plot to an existing configuration, hit the <span class="btn btn-primary" id="new_plot"><i class="icon-plus-sign icon-white"></i> Add Plot</span> button at the bottom right.</li>
-							<li>To edit or delete an existing plot, hit the gear at the top right of the plot.</li>
-						</ul>
-				<h3>history</h3>
-					<h4 id="history_downloads">Download CSV</h4>
-						<ul>
-							<li>Run data from previous runs can be downloaded in CSV (comma separated value) format by selecting the run number and hitting the <span id="download_data" class="btn data_see"><i class="icon-download-alt"></i> Download Data</span> button.</li>
-							<li class="muted">The CSV currently does not support showing control state changes. This functionality is currently being implemented.</li>
-						</ul>
-					<h4 id="history_view">View Past Run</h4>
-						<ul>
-							<li class="muted">This functionality is currently being implemented</li>
-						</ul>
-				<h3>settings</h3>
-					<h4 id="settings_inputs">Inputs</h4>
-						<ul>
-							<li>This system has 16 analog inputs (digital inputs can be emulated by using the default <a href="#settings_conversions">conversion</a> "digital" which assumes anything less than Vcc/2 is low and anything greater than that value is high).</li>
-							<li>Each input can be named and assigned a specified conversion.</li>
-							<li>When a run is performed, only those inputs that are set active will be stored and made available for plotting.</li>
-						</ul>
-					<h4 id="setings_conversions">Conversions</h4>
-						<ul>
-							<li>Any number of conversions can be created. These should map between the "analog" values (0-1023) obtained on the analog inputs and the real value that the attached sensor is actually reading.</li>
-							<li>The equation should be written using javascript Math types. The equation will be evaluated in a Math environment, so use of the "Math" prefix for functions is unnecessary.</li>
-							<li>The equations must be written in terms of <em>x</em>, where <em>x</em> is the analog reading</li>
-							<li>Available constants include:
-								<ul>
-									<li>E <span class="muted">// Returns Euler's number (approx. 2.718)</span></li>
-									<li>LN2 <span class="muted">// Returns the natural logarithm of 2 (approx. 0.693)</span></li>
-									<li>LN10 <span class="muted">// Returns the natural logarithm of 10 (approx. 2.302)</span></li>
-									<li>LOG2E <span class="muted">// Returns the base-2 logarithm of E (approx. 1.442)</span></li>
-									<li>LOG10E <span class="muted">// Returns the base-10 logarithm of E (approx. 0.434)</span></li>
-									<li>PI <span class="muted">// Returns PI (approx. 3.14)</span></li>
-									<li>SQRT1_2	<span class="muted">// Returns the square root of 1/2 (approx. 0.707)</span></li>
-									<li>SQRT2 <span class="muted">// Returns the square root of 2 (approx. 1.414)</span></li>
-								</ul>
-							</li>
-							<li>Available Functions include:
-								<ul>
-									<li>abs(x) <span class="muted">// Returns the absolute value of x</span></li>
-									<li>acos(x) <span class="muted">// Returns the arccosine of x, in radians</span></li>
-									<li>asin(x) <span class="muted">// Returns the arcsine of x, in radians</span></li>
-									<li>atan(x) <span class="muted">// Returns the arctangent of x as a numeric value between -PI/2 and PI/2 radians</span></li>
-									<li>atan2(y,x) <span class="muted">// Returns the arctangent of the quotient of its arguments</span></li>
-									<li>ceil(x) <span class="muted">// Returns x, rounded upwards to the nearest integer</span></li>
-									<li>cos(x) <span class="muted">// Returns the cosine of x (x is in radians)</span></li>
-									<li>exp(x) <span class="muted">// Returns the value of Ex</span></li>
-									<li>floor(x) <span class="muted">// Returns x, rounded downwards to the nearest integer</span></li>
-									<li>log(x) <span class="muted">// Returns the natural logarithm (base E) of x</span></li>
-									<li>max(x,y,z,...,n) <span class="muted">// Returns the number with the highest value</span></li>
-									<li>min(x,y,z,...,n) <span class="muted">// Returns the number with the lowest value</span></li>
-									<li>pow(x,y) <span class="muted">// Returns the value of x to the power of y</span></li>
-									<li>random() <span class="muted">// Returns a random number between 0 and 1</span></li>
-									<li>round(x) <span class="muted">// Rounds x to the nearest integer</span></li>
-									<li>sin(x) <span class="muted">// Returns the sine of x (x is in radians)</span></li>
-									<li>sqrt(x) <span class="muted">// Returns the square root of x</span></li>
-									<li>tan(x) <span class="muted">// Returns the tangent of an angle</span></li>
-								</ul>
-							</li>
-							<li>Some example Conversions:
-								<ul>
-									<li>x <span class="muted">// for direct output of the read value (0-1023)</span></li>
-									<li>14*pow(x,2)-3*x+4 <span class="muted">// arbitrary polynomial expression</span></li>
-								</ul>
-							</li>
-						</ul>
-					<h4 id="settings_outputs">Outputs</h4>
-						<ul>
-							<li>Each of the eight outputs can be assigned a name, activated or deactivated (enabled for control runs), and have a default value set (whether the output is high or low when no runs ae active).</li>
-							<li>If an output should always be high, it should be set to a default "on" position and every control state should have that output made active.</li>
-						</ul>
-					<h4 id="settings_controlmanage">Manage Controls</h4>
-						<ul>
-							<li>A control scheme is a saved collection of ordered control states.</li>
-							<li>To create a new control scheme, hit the <span class="btn btn-primary">New Control Scheme</span> button. A prompt will be dsplayed to name the new control scheme, and upon accepting the name, the control scheme will be made the active scheme, ready to be <a href="#settings_controledit">edited</a>.</li>
-							<li>To delete the selected control scheme, hit the <span class="btn btn-danger">Delete Control Scheme</span> button. A confirmation will be displayed before deleting the control scheme.</li>
-							<li>To rename the selected control scheme, hit thr <span class="btn">Rename Control Scheme</span> button and enter the new name at the prompt.</li>
-							<li>To change the active control scheme, select the desired scheme from the dropdown, and hit the <span class="btn">Set Active Control Scheme</span> button.</li>
-						</ul>
-					<h4 id="settings_controledit">Edit Controls</h4>
+			<div class="span10">
+				<div class="well">
+					<h3 style="margin-top:-.4em" id="live">live</h3>
+						<h4 id="live-startrun">Starting A Run</h4>
+							<ul>
+								<li>Before starting a run, make sure all <a href="#settings_inputs">settings</a> are correctly configured. You may find it easier to set the proper <a href="#live_plotconfigs">plot configuration</a> before proceeding.</li>
+								<li>To actually start the run, first enter a name for the run, the sampling rate (in Hz) and the run duration (in minutes).</li>
+								<li>The run will begin when the <span class="btn">Start</span> button is pressed. When this happens, the <span class="btn">Stop</span> button will become active.</li>
+							</ul>
+						<h4 id="live-plotconfigs">Plot Configurations</h4>
+							<ul>
+								<li>Plot configurations are used to store the look of the "live" page.</li>
+								<li>To create a new configuration, hit the <span class="btn btn-primary" id="new_config"><i class="icon-ok-circle icon-white"></i> New Configuration</span> button at the bottom of the page and fill in a name when prompted</li>
+								<li>To delete the current configuration, hit the <span class="btn btn-danger" id="delete_config"><i class="icon-remove-circle icon-white"></i> Delete configuration</span> and confirm when prompted.</li>
+								<li>To add a plot to an existing configuration, hit the <span class="btn btn-primary" id="new_plot"><i class="icon-plus-sign icon-white"></i> Add Plot</span> button at the bottom right.</li>
+								<li>To edit or delete an existing plot, hit the gear at the top right of the plot.</li>
+							</ul>
+					<h3 id="history">history</h3>
+						<h4 id="history_downloads">Download CSV</h4>
+							<ul>
+								<li>Run data from previous runs can be downloaded in CSV (comma separated value) format by selecting the run number and hitting the <span id="download_data" class="btn data_see"><i class="icon-download-alt"></i> Download Data</span> button.</li>
+								<li class="muted">The CSV currently does not support showing control state changes. This functionality is currently being implemented.</li>
+							</ul>
+						<h4 id="history_view">View Past Run</h4>
+							<ul>
+								<li class="muted">This functionality is currently being implemented</li>
+							</ul>
+					<h3 id="settings">settings</h3>
+						<h4 id="settings_inputs">Inputs</h4>
+							<ul>
+								<li>This system has 16 analog inputs (digital inputs can be emulated by using the default <a href="#settings_conversions">conversion</a> "digital" which assumes anything less than Vcc/2 is low and anything greater than that value is high).</li>
+								<li>Each input can be named and assigned a specified conversion.</li>
+								<li>When a run is performed, only those inputs that are set active will be stored and made available for plotting.</li>
+							</ul>
+						<h4 id="settings_conversions">Conversions</h4>
+							<ul>
+								<li>Any number of conversions can be created. These should map between the "analog" values (0-1023) obtained on the analog inputs and the real value that the attached sensor is actually reading.</li>
+								<li>The equation should be written using javascript Math types. The equation will be evaluated in a Math environment, so use of the "Math" prefix for functions is unnecessary.</li>
+								<li>The equations must be written in terms of <em>x</em>, where <em>x</em> is the analog reading</li>
+								<li>Available constants include:
+									<ul>
+										<li>E <span class="muted">// Returns Euler's number (approx. 2.718); Note: an "E" on its own is Euler's number; an "E" preceeded by a number and followed by an integer is scientific notation</span></li>
+										<li>LN2 <span class="muted">// Returns the natural logarithm of 2 (approx. 0.693)</span></li>
+										<li>LN10 <span class="muted">// Returns the natural logarithm of 10 (approx. 2.302)</span></li>
+										<li>LOG2E <span class="muted">// Returns the base-2 logarithm of E (approx. 1.442)</span></li>
+										<li>LOG10E <span class="muted">// Returns the base-10 logarithm of E (approx. 0.434)</span></li>
+										<li>PI <span class="muted">// Returns PI (approx. 3.14)</span></li>
+										<li>SQRT1_2	<span class="muted">// Returns the square root of 1/2 (approx. 0.707)</span></li>
+										<li>SQRT2 <span class="muted">// Returns the square root of 2 (approx. 1.414)</span></li>
+									</ul>
+								</li>
+								<li>Available Functions include:
+									<ul>
+										<li>abs(x) <span class="muted">// Returns the absolute value of x</span></li>
+										<li>acos(x) <span class="muted">// Returns the arccosine of x, in radians</span></li>
+										<li>asin(x) <span class="muted">// Returns the arcsine of x, in radians</span></li>
+										<li>atan(x) <span class="muted">// Returns the arctangent of x as a numeric value between -PI/2 and PI/2 radians</span></li>
+										<li>atan2(y,x) <span class="muted">// Returns the arctangent of the quotient of its arguments</span></li>
+										<li>ceil(x) <span class="muted">// Returns x, rounded upwards to the nearest integer</span></li>
+										<li>cos(x) <span class="muted">// Returns the cosine of x (x is in radians)</span></li>
+										<li>exp(x) <span class="muted">// Returns the value of Ex</span></li>
+										<li>floor(x) <span class="muted">// Returns x, rounded downwards to the nearest integer</span></li>
+										<li>log(x) <span class="muted">// Returns the natural logarithm (base E) of x</span></li>
+										<li>max(x,y,z,...,n) <span class="muted">// Returns the number with the highest value</span></li>
+										<li>min(x,y,z,...,n) <span class="muted">// Returns the number with the lowest value</span></li>
+										<li>pow(x,y) <span class="muted">// Returns the value of x to the power of y</span></li>
+										<li>random() <span class="muted">// Returns a random number between 0 and 1</span></li>
+										<li>round(x) <span class="muted">// Rounds x to the nearest integer</span></li>
+										<li>sin(x) <span class="muted">// Returns the sine of x (x is in radians)</span></li>
+										<li>sqrt(x) <span class="muted">// Returns the square root of x</span></li>
+										<li>tan(x) <span class="muted">// Returns the tangent of an angle</span></li>
+									</ul>
+								</li>
+								<li>Some example Conversions:
+									<ul>
+										<li>x <span class="muted">// for direct output of the read value (0-1023)</span></li>
+										<li>1.425E3*pow(x,2)-3.974E2*x+4.597 <span class="muted">// arbitrary polynomial expression</span></li>
+									</ul>
+								</li>
+							</ul>
+						<h4 id="settings_outputs">Outputs</h4>
+							<ul>
+								<li>Each of the eight outputs can be assigned a name, activated or deactivated (enabled for control runs), and have a default value set (whether the output is high or low when no runs ae active).</li>
+								<li>If an output should always be high, it should be set to a default "on" position and every control state should have that output made active.</li>
+							</ul>
+						<h4 id="settings_controlmanage">Manage Controls</h4>
+							<ul>
+								<li>A control scheme is a saved collection of ordered control states.</li>
+								<li>To create a new control scheme, hit the <span class="btn btn-primary">New Control Scheme</span> button. A prompt will be dsplayed to name the new control scheme, and upon accepting the name, the control scheme will be made the active scheme, ready to be <a href="#settings_controledit">edited</a>.</li>
+								<li>To delete the selected control scheme, hit the <span class="btn btn-danger">Delete Control Scheme</span> button. A confirmation will be displayed before deleting the control scheme.</li>
+								<li>To rename the selected control scheme, hit thr <span class="btn">Rename Control Scheme</span> button and enter the new name at the prompt.</li>
+								<li>To change the active control scheme, select the desired scheme from the dropdown, and hit the <span class="btn">Set Active Control Scheme</span> button.</li>
+							</ul>
+						<h4 id="settings_controledit">Edit Controls</h4>
+							<ul>
+								<li>Each control scheme has editable states. Select a control scheme from the dropdown box. This will cause the constituent states to be listed.</li>
+								<li>Each state is given a name, a list of active outputs, and a condition for skipping to the next state before the maximum time is reached.</li>
+								<li>The list of inputs consists of all the outputs in the system. Any output that is not "active" will be grayed out and uneditable. Those outputs which are active can be set high (blue) or set low (gray) for that state.</li>
+								<li>To define a condition which, if met, will cause the system to switch to the next state early, select an input from the dropdown menu. Then select a comparison method (less than or greater than) and then enter a threshold in the box. No condition is required to be set.</li>
+								<li>mintime and maxtime are, respectively, the minimum and maximum duration of the run, in seconds. The system will wait until "mintime" is reached before listening for the condition to be met. If the condition is not met by "maxtime", then the system will progress to the next state.</li>
+								<li class="muted">If a maxtime of "0" is provided, the state will continue indefinitely, unless a condition causes it to change.</li>
+								<li>To add a new state, click the <span class="btn btn-primary">add new state</span> button.</li>
+							</ul>
+			</div>
+			<div class="well">
+				<h3 id="reset" style="margin-top:-.4em">reset</h3>
+					<h4 id="reset_settings">Restore Factory Settings</h4>
+						<button class="btn btn-danger" id="restoresettings">restore factory settings</button>
+					<h4 id="reset_data">Delete All Run History</h4>
+						<button class="btn btn-danger" id="cleardata">delete run history</button>
+
+			</div>
 		</div>
 	</div>
