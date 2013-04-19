@@ -333,7 +333,8 @@ function newState() {
     clearTimeout(ctlend);
     var prev_state = rcont.state;
     var next_state = (Object.keys(rinfo.controls.definition).length >= ns + 1) ? ns + 1 : 1;
-    ctlend = setTimeout(newState,st.max*1000);
+    if(st.max > 0)
+      ctlend = setTimeout(newState,st.max*1000);
     rcont = {state: ns, begin: nt, prev: prev_state, next: next_state};
     setOutput(st.values);
     io.sockets.emit("state_change", rcont);
