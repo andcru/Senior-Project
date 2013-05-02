@@ -98,6 +98,7 @@ io.sockets.on('connection', function (socket) {
     conn--;
     console.log("Total connections: "+conn);
   });
+  socket.on('view_request', function(data) { view_request(data,socket); })
 });
 
 //Set Functions
@@ -254,7 +255,8 @@ function setRun(data) {
       if(err) throw err;
       run = result.insertId;
       rcont = {state: 0, begin: rinfo.starttime.getTime()};
-      newState();
+      if(Object.keys(rinfo.controls.definition).length > 0)
+        newState();
       console.log("Starting run "+run);
       rend = setTimeout(function() {
         killRun();
@@ -285,6 +287,19 @@ function makeCSV(old_run) {
   });
 }
 
+function view_request(data,socket){
+  var buff = {};
+  db.query('SELECT * FROM readings WHERE run = ' + sql.escape(data.num), function (err, rows, fields) {
+    if(err) throw err;
+    buff.readings = rows;
+    db.query('SELECT * FROM runs WHERE id = ' + sql.escape(data.num), function (err, rows, fields) {
+      buff.runinfo = rows;
+      socket.emit('view_data', buff);
+    });
+  });
+}
+
+
 // Sampler
 function sampler() {
   var delay;
@@ -295,7 +310,8 @@ function sampler() {
       var query = "INSERT INTO readings (run,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12,r13,r14,r15,r16,timestamp) VALUES ("+run+","+buff+")";
       db.query(query);
       delay = del;
-      control(buff);
+      if(rcont.state > 0)
+        control(buff);
       console.log('Sampled & Stored');
     }
     else

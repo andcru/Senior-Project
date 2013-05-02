@@ -164,6 +164,7 @@ function getData(data){
     var time = vals.pop();
     var actvals = [];
     recent_time = convertTime(time);
+	console.log(time);
     $.each(tables.inputs, function(k,v) {
         if(v.active > 0) {
             var holder = data_converted[k];

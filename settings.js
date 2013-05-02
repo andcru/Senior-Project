@@ -12,15 +12,15 @@ $(document).ready(function(){
 	});
 	$('#cs_select').on('change', function(){
 		if(parseInt($(this).val()) == active.controls)
-			$('#cs_activate').attr('disabled',true);
+			$('#cs_activate, #cs_delete').attr('disabled',true);
 		else
-			$('#cs_activate').attr('disabled',false);
+			$('#cs_activate, #cs_delete').attr('disabled',false);
 	})
 	$('#cs_activate').on('click', function(){
 		loadWrap('setting active configuration', 1, activateCS);
 	});
 	$('#cs_delete').on('click', function(){
-		if(confirm('Are you sure you want to delete this control scheme?'))
+		(confirm('Are you sure you want to delete this control scheme?'))
 			loadWrap('deleting configuration', 1, deleteCS, parseInt($('#cs_select').val()));	
 	});
 	$('#cs_create').on('click', function(){
